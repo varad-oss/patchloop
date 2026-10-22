@@ -1,0 +1,35 @@
+# Target repositories for the benchmark. See docs/DECISIONS.md ADR-004 for why these two.
+# Test times measured 2026-10-23 inside python:3.12-slim (full suite, one run).
+
+[repos.toolz]
+url = "https://github.com/pytoolz/toolz"
+tag = "1.2.0"
+commit = "451af60dec590a6010e2babdbf391ea8f815122f"
+license = "BSD-3-Clause"
+image = "patchloop/toolz:451af60"
+source_dirs = ["toolz"]
+tests_dir = "toolz/tests"
+test_cmd = "python -m pytest -p no:cacheprovider toolz/tests"
+measured_test_seconds = 0.4
+
+[repos.boltons]
+url = "https://github.com/mahmoud/boltons"
+tag = "26.2.0"
+commit = "4332b35a278d694f30c99881faa61cde695c7a96"
+license = "BSD-3-Clause"
+image = "patchloop/boltons:4332b35"
+source_dirs = ["boltons"]
+tests_dir = "tests"
+test_cmd = "python -m pytest -p no:cacheprovider tests"
+measured_test_seconds = 1.8
+
+[repos.toy]
+url = ""
+tag = ""
+commit = "local"
+license = "MIT"
+image = "patchloop/toy:latest"
+source_dirs = ["toyrepo"]
+tests_dir = "tests"
+test_cmd = "python -m pytest -p no:cacheprovider tests"
+measured_test_seconds = 0.1

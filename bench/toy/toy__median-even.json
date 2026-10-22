@@ -1,0 +1,28 @@
+{
+  "instance_id": "toy__median-even",
+  "repo": "toy",
+  "image": "patchloop/toy:latest",
+  "base_commit": "local",
+  "bug_patch": "diff --git a/toyrepo/stats.py b/toyrepo/stats.py\nindex 01278e3..62afed6 100644\n--- a/toyrepo/stats.py\n+++ b/toyrepo/stats.py\n@@ -14,7 +14,7 @@ def median(values):\n     mid = len(ordered) // 2\n     if len(ordered) % 2 == 1:\n         return ordered[mid]\n-    return (ordered[mid - 1] + ordered[mid]) / 2\n+    return (ordered[mid] + ordered[mid + 1]) / 2\n \n \n def clamp(x, lo, hi):\n",
+  "tests_dir": "tests",
+  "test_cmd": "python -m pytest -p no:cacheprovider tests",
+  "problem_statement": "`median()` gives the wrong answer for lists with an even number of elements: median([4, 1, 3, 2]) returns 3.5, expected 2.5.",
+  "FAIL_TO_PASS": [
+    "tests/test_stats.py::test_median_even"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_stats.py::test_mean",
+    "tests/test_stats.py::test_mean_empty",
+    "tests/test_stats.py::test_median_odd",
+    "tests/test_stats.py::test_clamp",
+    "tests/test_stats.py::test_running_max"
+  ],
+  "difficulty": {
+    "strategy": "hand",
+    "mutation": "off_by_one",
+    "n_fail": 1,
+    "lines_changed": 1,
+    "func_named_in_test": true,
+    "file": "toyrepo/stats.py"
+  }
+}

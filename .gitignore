@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.pytest_cache/
+.ruff_cache/
+results/*
+!results/.gitkeep
+!results/E1*/
+!results/E2*/
+results/*/trajectories/
+.DS_Store
+build/
+dist/
+*.egg-info/
