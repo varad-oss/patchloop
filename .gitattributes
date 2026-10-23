@@ -1,0 +1,3 @@
+# Generated evaluation outputs: exclude from GitHub language stats and collapse in diffs.
+results/** linguist-generated=true
+bench/** linguist-generated=true
