@@ -1,0 +1,8 @@
+{"id": "chatcmpl-fixture", "object": "chat.completion", "created": 1761200000, "model": "llama-fixture",
+ "choices": [{"index": 0, "finish_reason": "tool_calls", "message": {"role": "assistant", "content": null,
+   "tool_calls": [
+     {"id": "call_1", "type": "function", "function": {"name": "view_file", "arguments": "{\"path\": \"toyrepo/stats.py\"}"}},
+     {"id": "call_2", "type": "function", "function": {"name": "bash", "arguments": "{\"command\": \"ls\""}}
+   ]}}],
+ "usage": {"prompt_tokens": 900, "completion_tokens": 40, "total_tokens": 940,
+           "prompt_tokens_details": {"cached_tokens": 300}, "completion_tokens_details": {"reasoning_tokens": 0}}}

@@ -18,7 +18,15 @@ from dataclasses import asdict, dataclass, field
 
 from . import prompts
 from .context import ContextTracker, compact
-from .models import FatalModelError, ModelAdapter, ModelTurn, RetryableModelError, Usage, cost_usd, load_pricing
+from .models import (
+    FatalModelError,
+    ModelAdapter,
+    ModelTurn,
+    RetryableModelError,
+    Usage,
+    cost_usd,
+    load_pricing,
+)
 from .tools import Toolbox
 from .trajectory import Trajectory
 

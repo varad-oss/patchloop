@@ -14,6 +14,7 @@ Isolation (verified flag names, Docker 29.7 `docker run --help`):
   tests bind-mounted :ro         edits to tests fail with "Read-only file system"
   --user 1000:1000               non-root
   --security-opt no-new-privileges, --cap-drop ALL
+  --init                         PID 1 reaps orphans the agent leaves behind
   timeout -k 2 <s> per command   per-command wall clock limit, inside the container
 """
 
@@ -94,6 +95,7 @@ class DockerEnv:
         return [
             "docker", "run", "-d", "--rm", "--name", self.name,
             "--label", "patchloop=1",
+            "--init",  # PID 1 reaps orphaned processes the agent leaves behind
             "--network", "none",
             "--memory", memory, "--memory-swap", memory,
             "--cpus", cpus,

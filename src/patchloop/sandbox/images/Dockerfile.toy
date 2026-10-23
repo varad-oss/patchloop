@@ -8,7 +8,7 @@ RUN apt-get update \
  && useradd --create-home --uid 1000 agent \
  && pip install --no-cache-dir pytest==9.1.1
 
-COPY --chown=agent:agent . /workspace
+COPY . /workspace
 RUN cd /workspace \
  && git init -q \
  && git -c user.name=patchloop -c user.email=patchloop@localhost add -A \

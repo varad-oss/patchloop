@@ -8,6 +8,9 @@ results/*
 !results/.gitkeep
 !results/E1*/
 !results/E2*/
+!results/oracle/
+results/oracle/episodes/
+results/oracle/viewer.html
 results/*/trajectories/
 .DS_Store
 build/
