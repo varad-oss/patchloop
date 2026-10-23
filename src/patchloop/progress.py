@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import sys
 import time
 from datetime import datetime, timedelta
@@ -31,6 +32,18 @@ def _fmt(seconds: float) -> str:
     h, rem = divmod(seconds, 3600)
     m, s = divmod(rem, 60)
     return f"{h}h{m:02d}m" if h else f"{m}m{s:02d}s"
+
+
+OTHER_EVALS = {"trustdesk eval": "TrustDesk (P1)", "hopscout eval": "HopScout (P3)", "agentwal eval": "AgentWAL (P4)"}
+
+
+def _gpu_neighbours() -> list[str]:
+    """Other projects' evals sharing the local GPU (PatchLoop waits for them to finish)."""
+    found = []
+    for pattern, label in OTHER_EVALS.items():
+        if subprocess.run(["pgrep", "-f", pattern], capture_output=True).returncode == 0:
+            found.append(label)
+    return found
 
 
 def _read_json(path: Path) -> dict | None:
@@ -84,6 +97,10 @@ def render(snap: dict, started: float) -> str:
     width = max(20, min(50, shutil.get_terminal_size((90, 20)).columns - 45))
     out = [f"{BOLD}PatchLoop experiments{RESET}  {DIM}{datetime.now():%H:%M:%S} · refreshes every 5 s · "
            f"Ctrl+C to close (runs keep going){RESET}", ""]
+    neighbours = _gpu_neighbours()
+    if neighbours:
+        out += [f"\033[33mGPU busy with {', '.join(neighbours)}: PatchLoop is waiting its turn and starts "
+                f"automatically when it finishes.{RESET}", ""]
     for r in snap["rows"]:
         live_frac = 0.0
         if r["live"]:

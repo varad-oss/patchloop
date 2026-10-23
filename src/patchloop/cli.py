@@ -199,7 +199,7 @@ def main(argv: list[str] | None = None) -> int:
     r.set_defaults(fn=cmd_report)
 
     pr = sub.add_parser("progress", help="live terminal dashboard (read-only) for running experiments")
-    pr.add_argument("--runs", nargs="+", default=["effort-low-r2:5", "E1:36", "E2:36"],
+    pr.add_argument("--runs", nargs="+", default=["effort-low-r3:5", "E1:36", "E2:36"],
                     help="run_id:episodes, e.g. E1:36")
     pr.add_argument("--interval", type=float, default=5.0)
     pr.add_argument("--once", action="store_true", help="print one frame and exit")
