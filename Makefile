@@ -53,6 +53,9 @@ local-model:  ## build the 16K-context qwen3 variant used for free local runs
 eval-local:  ## free run on the local model, e.g. make eval-local RUN=E1 / RUN=E2 TOOLSET=bash_only
 	$(PY) -m patchloop.cli eval --run-id $(RUN) --model $(LOCAL_MODEL) --toolset $(TOOLSET) --effort $(EFFORT) $(LOCAL_FLAGS)
 
+progress:  ## live dashboard for running experiments (read-only)
+	$(PY) -m patchloop.cli progress
+
 report:
 	$(PY) -m patchloop.cli report --run-id $(RUN)
 

@@ -145,6 +145,13 @@ def cmd_report(args) -> int:
     return 0
 
 
+def cmd_progress(args) -> int:
+    from .progress import parse_runs, watch
+
+    watch(parse_runs(args.runs), args.interval, args.once)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="patchloop")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -190,6 +197,13 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--run-id")
     r.add_argument("--all", action="store_true")
     r.set_defaults(fn=cmd_report)
+
+    pr = sub.add_parser("progress", help="live terminal dashboard (read-only) for running experiments")
+    pr.add_argument("--runs", nargs="+", default=["effort-low-r2:5", "E1:36", "E2:36"],
+                    help="run_id:episodes, e.g. E1:36")
+    pr.add_argument("--interval", type=float, default=5.0)
+    pr.add_argument("--once", action="store_true", help="print one frame and exit")
+    pr.set_defaults(fn=cmd_progress)
 
     args = p.parse_args(argv)
     if args.cmd == "report" and not (args.all or args.run_id):
