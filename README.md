@@ -46,7 +46,12 @@ annotated failures: [docs/EVAL_ANALYSIS.md](docs/EVAL_ANALYSIS.md) · raw data: 
 | **E2** | `bash` + `submit` only | **3/36 = 8.3%** [3, 22] | 10/36 | 308 s | $0 |
 | oracle | reverse-applies each injected bug (harness check) | 36/36 = 100% | — | — | $0 |
 
-<p align="center"><img src="results/resolve_rates.svg" width="560" alt="Resolve rate with 95% Wilson intervals for E1 and E2"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="results/resolve_rates-dark.svg">
+    <img src="results/resolve_rates.svg" width="640" alt="Resolve rate with 95% Wilson intervals: E1 structured 33.3%, E2 bash only 8.3%">
+  </picture>
+</p>
 
 **What it shows**
 - **The interface matters for a small model.** On the same 36 tasks, 11 were solved only with the structured
