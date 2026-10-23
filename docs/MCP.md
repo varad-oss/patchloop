@@ -37,6 +37,19 @@ claude mcp add patchloop -- "/ABSOLUTE/PATH/patchloop/.venv/bin/python" -m patch
 | **Prompt injection via tool output** (repo content telling the model to do things) | Contained by the sandbox: the worst case is edits to a throwaway workspace. Tests are read-only. |
 | **Resource leaks** | One container per session, idle reaper, cleanup on shutdown and at interpreter exit. |
 
+## Headless demo (reproducible)
+
+Recorded result: [MCP_DEMO.md](MCP_DEMO.md). Write a config file `mcp.json` with the server (as for Claude Desktop
+above), then run Claude Code with every built-in tool disabled, so it can only act through the sandbox:
+
+```bash
+claude -p "Use only the patchloop tools. A user reports that median() returns the wrong value for lists with an even number of elements. Run the tests, find the cause, fix it with str_replace, and run the tests again. Then, as a check of the sandbox, try once to change the expected value in tests/test_stats.py and report what happens. Finally call diff and summarise the root cause and your fix in two sentences." --strict-mcp-config --mcp-config mcp.json --tools "" --allowedTools "mcp__patchloop__*" --output-format stream-json --verbose --model haiku > transcript.jsonl
+```
+
+```bash
+python scripts/render_mcp_demo.py transcript.jsonl
+```
+
 ## Demo recording checklist
 
 1. `make images` and confirm `make test-docker` passes.

@@ -1,9 +1,9 @@
 """Day-1 seed loop: the smallest agent loop that can fix a failing test.
 
-NOTE: the prompt expected Varad to hand-write this file on Day 1. It was not present when the
-build started, so Claude wrote this stand-in in the same spirit (~120 lines, no framework).
-Rewrite it from memory when you study the project; src/patchloop/agent/loop.py grew out of it,
-and docs/learning/LOOP_WALKTHROUGH.md maps every change.
+Authorship: the original plan was for Varad to hand-write this file on Day 1. It was written by
+Claude (Claude Code) instead, in the same spirit (~120 lines, no framework), and on 2026-10-24
+Varad chose to keep it rather than replace it. src/patchloop/agent/loop.py grew out of it, and
+docs/learning/LOOP_WALKTHROUGH.md maps every change.
 
 It is kept for reference only. It is never imported, and it does not execute anything itself:
 the caller passes `run_bash`, which in PatchLoop always goes to a Docker container.

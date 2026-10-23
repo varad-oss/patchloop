@@ -163,7 +163,9 @@ official Python SDK v2. Each session gets its own container, created lazily and 
 claude mcp add patchloop -- "$(pwd)/.venv/bin/python" -m patchloop.mcp_server.server
 ```
 
-Config for Claude Desktop, a risk analysis (tool poisoning, over-broad permissions) and a demo script:
+**Recorded demo:** [docs/MCP_DEMO.md](docs/MCP_DEMO.md) shows Claude Code, with all built-in tools disabled, fixing
+the toy bug through the server in 8 turns, and being refused (`Read-only file system`) when it tries to edit a test.
+Config for Claude Desktop, a risk analysis (tool poisoning, over-broad permissions) and the reproducible demo command:
 [docs/MCP.md](docs/MCP.md).
 
 ## Project structure
@@ -188,7 +190,8 @@ tests/          unit/ (offline) and integration/ (Docker)
 - **Synthetic bugs.** Mostly single-line mutations, easier to localize than real-world bugs.
 - **Contamination.** Both libraries are surely in the model's training data. The bugs are new, but the original
   code is familiar.
-- **Template bug reports** are more structured than real user reports.
+- **Template bug reports** read like CI logs. A review of 10 found all reproducible and leak-free, but 6/10 titles
+  name test functions rather than real APIs ([review](docs/project/BUG_REPORT_REVIEW.md)).
 - **Docker is the isolation boundary.** A kernel or container-runtime escape would defeat it; a microVM (gVisor,
   Firecracker) would be stronger.
 
@@ -198,6 +201,7 @@ tests/          unit/ (offline) and integration/ (Docker)
 - Best-of-k with test-based selection, reported as pass@k and pass^k (implemented, not run).
 - Repeat E1/E2 with a stronger model to test whether the interface effect shrinks.
 - Real-bug tasks mined from the libraries' own history.
+- More natural bug reports: titles from real API names, and LLM-written prose behind the same leak check.
 
 ## Credits
 

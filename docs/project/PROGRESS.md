@@ -34,8 +34,10 @@ Bugs found and fixed during the build:
 
 ## Remaining (Varad, by hand)
 
-1. Review the 10 bug reports in `docs/project/BUG_REPORT_REVIEW.md` (tick the boxes; ~15 min).
-2. Study `docs/learning/` (start with `LOOP_WALKTHROUGH.md`, then M0-M7).
-3. Replace `seed/my_loop.py` with your own loop, then rewrite the core loop from memory in 30 minutes.
-4. Optional: record an MCP demo with Claude Code (`docs/MCP.md` checklist).
-5. Optional, free, when the GPU is free: evaluate the strategy-B tasks (E1b).
+1. Study `docs/learning/` (start with `LOOP_WALKTHROUGH.md`, then M0-M7), then rewrite the core loop from memory in
+   30 minutes (the last item on the spec's definition of done).
+2. Optional, free, when the GPU is free: evaluate the strategy-B tasks (E1b).
+
+Done on Varad's behalf (2026-10-24): bug-report review (by Claude, labelled as such, in
+`docs/project/BUG_REPORT_REVIEW.md`); the seed loop kept as Claude-written (ADR-010); MCP demo recorded with Claude
+Code (`docs/MCP_DEMO.md`).

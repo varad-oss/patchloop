@@ -2,6 +2,23 @@
 
 The spec asks a human to review ten generated bug reports. These ten were drawn with a fixed seed (`scripts/make_review_sheet.py`, seed 2026). For each one, read the report **first**, answer the three questions, then open the hidden bug to check your answers. Tick a box by changing `[ ]` to `[x]`.
 
+## Review result (2026-10-24)
+
+_Reviewed by Claude at Varad's request, not by a human; the spec asked for a human review._
+
+**Reproducible 10/10 · No leak 10/10 · Realistic 4/10.** The leak check works: no report names the buggy file, line or
+code, and the failure excerpts give real but non-locating clues (wrong values, exception types).
+
+Realism is the weakness, and it is systematic, not per-task:
+- **Titles invent function names.** `issues.template_issue` builds the title by stripping `test_` from failing test
+  names, so 6/10 titles name things like `floor_oor_lower` or `topk_is_stable` that do not exist in the library.
+- **Every report reads like a CI log**: it lists the library's own test ids, which a real user would not have.
+
+Not fixed in place: regenerating the reports would change the benchmark that E1 and E2 were run on. Fix for the next
+benchmark version: title from identifiers that appear in the failing assertion lines and exist in the package's public
+namespace (or a neutral "tests in test_x.py fail" title), and LLM-written issues (`--issues llm`) for natural prose.
+The leak check would still apply.
+
 Questions:
 1. **Reproducible:** could a developer reproduce the problem from this text alone?
 2. **No leak:** does it avoid giving away the file, line or code to change?
@@ -35,8 +52,8 @@ _negate_condition, 2 failing test(s), function named in a test: True_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [ ] Realistic
+- Comment: Title says `floor_oor_lower`/`floor_oor_upper`: test names with `test_` stripped, not real functions. Assertion values make it reproducible.
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -102,8 +119,8 @@ _swap_args, 25 failing test(s), function named in a test: False_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [ ] Realistic
+- Comment: 25 failing tests, 8 listed. Title mixes a real API (`merge`) with a test name (`curried_namespace`). The TypeError plus the curried-merge assertions point at the factory kwarg without naming it.
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -161,8 +178,8 @@ _bool_op_swap, 5 failing test(s), function named in a test: True_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [ ] Realistic
+- Comment: Title includes `merge_with_iterable_arg` (a test name). Errors (`'int' object has no attribute 'items'`) are a good, non-leaking clue.
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -204,8 +221,8 @@ _bool_op_swap, 1 failing test(s), function named in a test: True_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [x] Realistic
+- Comment: Title is the real function. Thin: only `assert False` around `raises(LookupError, ...)`, but enough to reproduce.
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -249,8 +266,8 @@ _off_by_one, 1 failing test(s), function named in a test: True_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [x] Realistic
+- Comment: Title is the real function; the assertion shows the missing trailing space, a fair clue to the slice bound.
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -292,8 +309,8 @@ _compare_flip, 1 failing test(s), function named in a test: True_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [x] Realistic
+- Comment: Real function and a minimal reproduction (`get('foo', {}, default='bar')` raises KeyError).
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -339,8 +356,8 @@ _bool_op_swap, 2 failing test(s), function named in a test: True_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [ ] Realistic
+- Comment: Title includes `topk_is_stable` (a test name). The TypeError is a clear symptom.
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -407,8 +424,8 @@ _change_constant, 8 failing test(s), function named in a test: False_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [ ] Realistic
+- Comment: Title names three test functions, none of them the API under test (`is_partial_args`/curry).
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -468,8 +485,8 @@ _swap_args, 5 failing test(s), function named in a test: False_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [ ] Realistic
+- Comment: Title names test functions. `isinstance() arg 2 must be a type` hints at swapped arguments but does not locate them.
 
 <details><summary>Show the injected bug (after answering)</summary>
 
@@ -513,8 +530,8 @@ _swap_args, 1 failing test(s), function named in a test: True_
 > 
 > These tests passed before, and I expected them to pass. Could you take a look?
 
-- [ ] Reproducible   - [ ] No leak   - [ ] Realistic
-- Comment: 
+- [x] Reproducible   - [x] No leak   - [x] Realistic
+- Comment: Real function and a one-line reproduction with the wrong output `[2, 3, 1]`.
 
 <details><summary>Show the injected bug (after answering)</summary>
 

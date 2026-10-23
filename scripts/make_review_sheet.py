@@ -2,9 +2,13 @@
 
 import json
 import random
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "docs" / "project" / "BUG_REPORT_REVIEW.md"
+if OUT.exists() and "## Review result" in OUT.read_text() and "--force" not in sys.argv:
+    sys.exit(f"{OUT} already holds a completed review; pass --force to overwrite it")
 tasks = sorted((json.loads(p.read_text()) for p in (ROOT / "bench" / "tasks").glob("*.json")),
                key=lambda t: t["instance_id"])
 sample = random.Random(2026).sample(tasks, 10)
@@ -26,5 +30,5 @@ for i, t in enumerate(sample, 1):
             "- [ ] Reproducible   - [ ] No leak   - [ ] Realistic", "- Comment: ", "",
             "<details><summary>Show the injected bug (after answering)</summary>", "", "```diff",
             t["bug_patch"].rstrip(), "```", "", "</details>", ""]
-(ROOT / "docs" / "project" / "BUG_REPORT_REVIEW.md").write_text("\n".join(out))
+OUT.write_text("\n".join(out))
 print("wrote docs/project/BUG_REPORT_REVIEW.md")

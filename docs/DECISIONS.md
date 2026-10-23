@@ -116,7 +116,10 @@ before and after each episode marks tampering.
 ## ADR-010 Seed loop
 
 The Day-1 hand-written `seed/my_loop.py` was not in the repo when the build began. Claude wrote a stand-in in the
-same spirit (~120 lines). `docs/learning/LOOP_WALKTHROUGH.md` maps seed → `loop.py`. Replace it with your own.
+same spirit (~120 lines). `docs/learning/LOOP_WALKTHROUGH.md` maps seed → `loop.py`.
+
+**Update 2026-10-24:** Varad decided to keep the Claude-written seed instead of replacing it. It is labelled as such in
+its docstring, and nothing in the repo describes it as hand-written.
 
 ## ADR-011 Experiments run on a free local model (Ollama), not a paid API
 
