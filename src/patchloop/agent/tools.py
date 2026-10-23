@@ -7,6 +7,7 @@ Tool failures never raise into the loop - they come back as observations with is
 
 from __future__ import annotations
 
+import difflib
 import posixpath
 import re
 import shlex
@@ -16,6 +17,7 @@ from ..sandbox.base import WORKSPACE, Env
 from .models import ToolCall, ToolSpec
 
 HEAD_LINES, TAIL_LINES, MAX_LINE_CHARS = 100, 50, 2000
+MAX_OBS_CHARS = 20_000  # ~6K tokens: one observation must never blow a small local context window
 VIEW_MAX_LINES, SEARCH_MAX_MATCHES = 200, 50
 
 
@@ -23,10 +25,14 @@ def truncate(text: str, head: int = HEAD_LINES, tail: int = TAIL_LINES) -> str:
     """Keep the first `head` and last `tail` lines, with an explicit marker in between."""
     lines = [ln if len(ln) <= MAX_LINE_CHARS else ln[:MAX_LINE_CHARS] + " [... line truncated ...]"
              for ln in text.splitlines()]
-    if len(lines) <= head + tail:
-        return "\n".join(lines)
-    cut = len(lines) - head - tail
-    return "\n".join([*lines[:head], f"[... {cut} lines truncated ...]", *lines[-tail:]])
+    if len(lines) > head + tail:
+        cut = len(lines) - head - tail
+        lines = [*lines[:head], f"[... {cut} lines truncated ...]", *lines[-tail:]]
+    out = "\n".join(lines)
+    if len(out) > MAX_OBS_CHARS:
+        half = MAX_OBS_CHARS // 2
+        out = f"{out[:half]}\n[... {len(out) - 2 * half} characters truncated ...]\n{out[-half:]}"
+    return out
 
 
 @dataclass
@@ -202,7 +208,8 @@ class Toolbox:
         if count != 1:
             hint = "no match - check whitespace and indentation" if count == 0 else \
                 "include more surrounding lines so old_str is unique"
-            return Observation(f"Error: old_str occurs {count} times in {path} ({hint}). No change made.", True)
+            near = closest_region(content, old_str) if count == 0 else ""
+            return Observation(f"Error: old_str occurs {count} times in {path} ({hint}). No change made.{near}", True)
         new_content = content.replace(old_str, new_str, 1)
         w = self.env.write_file(full, new_content)
         if w.exit_code != 0:
@@ -225,6 +232,31 @@ class Toolbox:
 
     def _submit(self, summary: str = "") -> Observation:
         return Observation("Submitted. The episode is over.", submitted=True)
+
+
+def closest_region(content: str, old_str: str, min_ratio: float = 0.5) -> str:
+    """For a failed exact match, show the most similar block of the file so the model can copy it verbatim
+    instead of re-typing code from memory."""
+    lines, want = content.splitlines(), old_str.strip("\n").splitlines()
+    if not lines or not want:
+        return ""
+    n = len(want)
+    target = "\n".join(s.strip() for s in want)
+    best, best_i = 0.0, 0
+    for i in range(0, max(1, len(lines) - n + 1)):
+        window = "\n".join(s.strip() for s in lines[i:i + n])
+        sm = difflib.SequenceMatcher(None, target, window, autojunk=False)
+        if sm.real_quick_ratio() <= best or sm.quick_ratio() <= best:
+            continue
+        r = sm.ratio()
+        if r > best:
+            best, best_i = r, i
+    if best < min_ratio:
+        return ""
+    lo, hi = max(0, best_i - 1), min(len(lines), best_i + n + 1)
+    shown = "\n".join(f"{k + 1:6d}\t{lines[k]}" for k in range(lo, hi))
+    return (f"\nThe most similar region of the file (lines {lo + 1}-{hi}) is shown below. Copy old_str from it "
+            f"exactly, without the line-number prefix:\n{shown}")
 
 
 _SUMMARY_RE = re.compile(r"=+ (.*(?:passed|failed|error|no tests ran).*?) (?:in [\d.]+s.*)?=+\s*$", re.M)

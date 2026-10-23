@@ -113,3 +113,39 @@ before and after each episode marks tampering.
 
 The Day-1 hand-written `seed/my_loop.py` was not in the repo when the build began. Claude wrote a stand-in in the
 same spirit (~120 lines). `docs/learning/LOOP_WALKTHROUGH.md` maps seed → `loop.py`. Replace it with your own.
+
+## ADR-011 Experiments run on a free local model (Ollama), not a paid API
+
+**Context.** Varad's constraint (2026-10-23): no API key and no paid service. Everything runs free.
+
+**Decision.** E1/E2 run on `qwen3:8b` (Q4_K_M, 8.2B parameters) served locally by Ollama 0.40.8, through the existing
+`OpenAICompatibleAdapter` at `http://localhost:11434/v1` (model spec `ollama:<name>`). No new adapter code was
+needed beyond passing `reasoning_effort`. The provider-neutral adapter design (ADR-001) is what made this a
+config change.
+
+- **Context window.** Ollama's default context is too small for an agent transcript, and it *silently drops the
+  start* of an over-long prompt. `config/ollama/Modelfile.qwen3-8b-16k` sets `num_ctx 16384`. KV cache is about
+  147 KB/token (36 layers x 8 KV heads x 128 dims x 2 x fp16), about 2.4 GB at 16K, which fits next to the Docker VM on
+  a 16 GB M5. The compaction threshold is set to 12,000 tokens, and every observation is capped at 20,000 characters.
+- **Thinking.** qwen3's thinking is switched with `reasoning_effort`: `none` = off, `low` = on. This replaces
+  ADR-008's low-vs-medium measurement (see the result below).
+- **Concurrency 1**, because one local model serves requests one at a time. Wall-time limit raised to 900 s per
+  episode, since local inference is slower than an API.
+- **Cost is $0** for every run. The Claude adapter, pricing table and pilot gate stay in place and tested, for
+  anyone who does have a key.
+
+**Consequences.** Absolute resolve rates are for an 8B local model, not Claude Haiku 5.5. The CV/README must say so.
+
+## ADR-012 `str_replace` shows the closest region on a failed match
+
+**Evidence.** In the thinking-off effort check (`results/effort-none`), `boltons__backoff_iter-compare_flip-017`
+burned 14 of 40 steps re-sending an `old_str` the model had paraphrased from memory (wrong condition order,
+merged string literals). The error said only "occurs 0 times".
+
+**Decision.** On 0 matches, `str_replace` appends the most similar block of the file (difflib over windows the size
+of `old_str`, whitespace-insensitive, shown only when similarity >= 0.5) with line numbers, and says to copy it
+exactly. This is a general interface change in the spirit of SWE-agent's agent-computer interface work. It is not
+specific to any task.
+
+**Disclosure.** The change was made after seeing 5 pilot trajectories and before E1/E2. E1 and E2 both use it. The
+effort check (`effort-none`, `effort-low`) ran on the earlier version.

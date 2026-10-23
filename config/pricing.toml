@@ -25,6 +25,7 @@ output = 20.00
 cache_read_mult = 0.05
 cache_write_mult = 1.25
 
+# Local models served by Ollama ("ollama:<name>") are not listed: unknown models cost $0.
 # Free-tier development models (OpenAI-compatible endpoints) and the scripted fake model.
 [models."fake"]
 input = 0.0

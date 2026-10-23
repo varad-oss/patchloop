@@ -28,6 +28,11 @@ def test_truncate_short_untouched():
     assert truncate("a\nb") == "a\nb"
 
 
+def test_truncate_total_chars():
+    out = truncate("\n".join("y" * 1900 for _ in range(150)))
+    assert len(out) < 21_000 and "characters truncated" in out
+
+
 def test_truncate_long_line():
     assert "[... line truncated ...]" in truncate("x" * 5000)
 
@@ -46,6 +51,12 @@ def test_str_replace_success_shows_snippet(mem_env):
 def test_str_replace_zero_matches(mem_env):
     obs = run(mem_env, "str_replace", path="pkg/mod.py", old_str="nope", new_str="y")
     assert obs.is_error and "occurs 0 times" in obs.content
+
+
+def test_str_replace_zero_matches_shows_closest_region(mem_env):
+    obs = run(mem_env, "str_replace", path="pkg/mod.py", old_str="    retrun x+1", new_str="y")
+    assert obs.is_error and "most similar region" in obs.content
+    assert "4\t    return x + 1" in obs.content
 
 
 def test_str_replace_multiple_matches(mem_env):

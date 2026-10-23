@@ -210,15 +210,19 @@ class AnthropicAdapter:
 
 
 class OpenAICompatibleAdapter:
-    """Chat Completions function calling, for free tiers (Groq, OpenRouter, Gemini's endpoint)."""
+    """Chat Completions function calling, for free/local models (Ollama, Groq, OpenRouter, Gemini's endpoint).
+
+    reasoning_effort is passed through when set; Ollama maps "none" to thinking off for qwen3."""
 
     def __init__(self, model: str, base_url: str | None = None, api_key: str | None = None,
-                 max_tokens: int = 8000, client: Any = None):
+                 max_tokens: int = 8000, client: Any = None, reasoning_effort: str | None = None,
+                 timeout: float = 300):
         import openai
 
         self.model = model
         self.max_tokens = max_tokens
-        self.client = client or openai.OpenAI(base_url=base_url, api_key=api_key, max_retries=0, timeout=300)
+        self.reasoning_effort = reasoning_effort
+        self.client = client or openai.OpenAI(base_url=base_url, api_key=api_key, max_retries=0, timeout=timeout)
         self._openai = openai
 
     def to_wire(self, system: str, messages: list[dict]) -> list[dict]:
@@ -242,6 +246,7 @@ class OpenAICompatibleAdapter:
                 messages=self.to_wire(system, messages),
                 tools=[{"type": "function", "function": {"name": t.name, "description": t.description,
                                                          "parameters": t.parameters}} for t in tools],
+                **({"reasoning_effort": self.reasoning_effort} if self.reasoning_effort else {}),
             )
         except (o.RateLimitError, o.InternalServerError, o.APIConnectionError) as e:
             raise RetryableModelError(f"{type(e).__name__}: {e}", _retry_after(e)) from e
@@ -314,9 +319,14 @@ class FakeModel:
 
 
 def make_adapter(spec: str, effort: str = "low") -> ModelAdapter:
-    """'claude-haiku-5-5' -> Anthropic; 'openai:<model>' -> OpenAI-compatible (env-configured)."""
+    """'claude-haiku-5-5' -> Anthropic; 'openai:<model>' -> OpenAI-compatible (env-configured);
+    'ollama:<model>' -> a local Ollama server (free, no key). For Ollama, effort 'none' turns thinking off."""
     import os
 
+    if spec.startswith("ollama:"):
+        return OpenAICompatibleAdapter(spec.removeprefix("ollama:"),
+                                       base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
+                                       api_key="ollama", reasoning_effort=effort, timeout=600)
     if spec.startswith("openai:"):
         return OpenAICompatibleAdapter(spec.removeprefix("openai:"),
                                        base_url=os.environ.get("OPENAI_COMPAT_BASE_URL"),

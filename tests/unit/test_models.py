@@ -85,3 +85,16 @@ def test_cost_tiers():
     cached = Usage(input_tokens=0, cache_read_tokens=50_000, cache_write_tokens=0)
     assert cost_usd("claude-haiku-5-5", cached) == pytest.approx(50_000 * 0.10 * 0.1 / 1e6)
     assert cost_usd("unknown-free-model", small) == 0.0
+
+
+def test_ollama_route_is_free_and_local():
+    from patchloop.agent.models import make_adapter
+    from patchloop.cli import _is_paid
+
+    a = make_adapter("ollama:patchloop-qwen3:8b-16k", effort="none")
+    assert isinstance(a, OpenAICompatibleAdapter)
+    assert a.model == "patchloop-qwen3:8b-16k" and a.reasoning_effort == "none"
+    assert str(a.client.base_url).startswith("http://localhost:11434/v1")
+    assert not _is_paid("ollama:patchloop-qwen3:8b-16k")
+    assert _is_paid("claude-haiku-5-5")
+    assert cost_usd(a.model, Usage(input_tokens=10_000, output_tokens=10_000)) == 0.0

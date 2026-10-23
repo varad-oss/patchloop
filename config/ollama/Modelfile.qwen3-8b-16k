@@ -1,0 +1,4 @@
+FROM qwen3:8b
+# 16K context: 8B Q4 weights (~5 GB) + fp16 KV cache (~147 KB/token -> ~2.4 GB) fits a 16 GB Mac
+# alongside the Docker VM. Ollama's default context is too small for an agent transcript.
+PARAMETER num_ctx 16384

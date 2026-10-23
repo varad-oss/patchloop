@@ -3,8 +3,12 @@ IMG := src/patchloop/sandbox/images
 RUN ?= smoke
 MODEL ?= claude-haiku-5-5
 TOOLSET ?= structured
+# Free, local: Ollama on this machine. See docs/DECISIONS.md ADR-011.
+LOCAL_MODEL ?= ollama:patchloop-qwen3:8b-16k
+EFFORT ?= none
+LOCAL_FLAGS := --concurrency 1 --soft-prompt-tokens 12000 --max-wall-s 900
 
-.PHONY: setup images test test-docker lint bench eval-smoke eval-pilot eval report view demo mcp clean-containers
+.PHONY: local-model eval-local setup images test test-docker lint bench eval-smoke eval-pilot eval report view demo mcp clean-containers
 
 setup:
 	uv venv --python 3.13 .venv && uv pip install --python $(PY) -e ".[dev]"
@@ -41,6 +45,13 @@ eval-pilot:  ## 3 real tasks; prints measured cost per task and the extrapolated
 
 eval:  ## full run - only after approving the pilot cost
 	$(PY) -m patchloop.cli eval --run-id $(RUN) --model $(MODEL) --toolset $(TOOLSET) --yes
+
+local-model:  ## build the 16K-context qwen3 variant used for free local runs
+	ollama pull qwen3:8b
+	ollama create patchloop-qwen3:8b-16k -f config/ollama/Modelfile.qwen3-8b-16k
+
+eval-local:  ## free run on the local model, e.g. make eval-local RUN=E1 / RUN=E2 TOOLSET=bash_only
+	$(PY) -m patchloop.cli eval --run-id $(RUN) --model $(LOCAL_MODEL) --toolset $(TOOLSET) --effort $(EFFORT) $(LOCAL_FLAGS)
 
 report:
 	$(PY) -m patchloop.cli report --run-id $(RUN)

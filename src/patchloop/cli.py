@@ -25,7 +25,7 @@ def _load_env() -> None:
 def _is_paid(model: str) -> bool:
     from .agent.models import load_pricing
 
-    if model in ("fake", "oracle"):
+    if model in ("fake", "oracle") or model.startswith("ollama:"):
         return False
     table = load_pricing()["models"].get(model)
     return table is None and not model.startswith("openai:") or bool(table and table["input"] > 0)
@@ -103,7 +103,8 @@ def cmd_eval(args) -> int:
     if not tasks:
         print(f"no tasks found in {args.tasks_dir}; run `make bench` first")
         return 2
-    budget = Budget(max_steps=args.max_steps, max_cost_usd=args.max_cost)
+    budget = Budget(max_steps=args.max_steps, max_cost_usd=args.max_cost, max_wall_s=args.max_wall_s,
+                    soft_prompt_tokens=args.soft_prompt_tokens)
     paid = _is_paid(args.model)
     kwargs = dict(spec=args.model, toolset=args.toolset, trials=args.trials, budget=budget,
                   concurrency=args.concurrency, effort=args.effort)
@@ -168,11 +169,15 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--run-id", required=True)
     e.add_argument("--model", default="claude-haiku-5-5", help="model id, 'openai:<model>', 'fake' or 'oracle'")
     e.add_argument("--toolset", choices=["structured", "bash_only"], default="structured")
-    e.add_argument("--effort", choices=["low", "medium", "high"], default="low")
+    e.add_argument("--effort", choices=["none", "low", "medium", "high"], default="low",
+                   help="Claude: output_config.effort; Ollama: reasoning_effort ('none' = thinking off)")
     e.add_argument("--trials", type=int, default=1)
     e.add_argument("--concurrency", type=int, default=4)
     e.add_argument("--max-steps", type=int, default=40)
     e.add_argument("--max-cost", type=float, default=0.15)
+    e.add_argument("--max-wall-s", type=float, default=600)
+    e.add_argument("--soft-prompt-tokens", type=int, default=80_000,
+                   help="compaction threshold; keep below the model's context window (12000 for a 16K local model)")
     e.add_argument("--tasks-dir", default=str(TASKS_DIR))
     e.add_argument("--task", action="append", help="restrict to these instance ids")
     e.add_argument("--include-toy", action="store_true")
