@@ -1,0 +1,40 @@
+{
+  "instance_id": "toolz__partition_all-bool_op_swap-017",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "step_limit",
+  "steps": 40,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 12100,
+    "output_tokens": 2969,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 204133,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 229.37,
+  "compactions": 0,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 1,
+  "tool_calls": 18,
+  "retries": 0,
+  "patch": "diff --git a/toolz/itertoolz.py b/toolz/itertoolz.py\nindex c472170..05ae1ef 100644\n--- a/toolz/itertoolz.py\n+++ b/toolz/itertoolz.py\n@@ -734,7 +734,7 @@ def partition_all(n, seq):\n             end = len(seq) % n\n             if prev[end - 1] is no_pad and prev[end] is not no_pad:\n                 raise LookupError(\n-                    'The sequence passed to `parition_all` has invalid length'\n+                    'The sequence passed to `partition_all` has invalid length'\n                 )\n             yield prev[:end]\n         except TypeError:\n",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "fail_to_pass_still_failing",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [
+      "toolz/tests/test_itertoolz.py::test_partition_all"
+    ],
+    "p2p_failed": [],
+    "touched": [
+      "toolz/itertoolz.py"
+    ]
+  },
+  "episode_wall_s": 230.85,
+  "failure_class": "budget_exhausted"
+}

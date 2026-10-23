@@ -1,0 +1,38 @@
+{
+  "instance_id": "boltons____init__-swap_args-011",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "submitted",
+  "steps": 13,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 6010,
+    "output_tokens": 553,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 36668,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 55.22,
+  "compactions": 0,
+  "submit_summary": "The root cause was that `file_perms` was being assigned a string value instead of an integer. The fix involved ensuring `file_perms` is initialized as an integer by using `kwargs.pop('file_perms', self._default_file_perms)`. This change allows `os.open` to correctly interpret `file_perms` as an integer, resolving the TypeError.",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 11,
+  "retries": 0,
+  "patch": "diff --git a/boltons/fileutils.py b/boltons/fileutils.py\nindex 5562d91..819374b 100644\n--- a/boltons/fileutils.py\n+++ b/boltons/fileutils.py\n@@ -388,7 +388,7 @@ class AtomicSaver:\n     def __init__(self, dest_path, **kwargs):\n         self.dest_path = os.fspath(dest_path)\n         self.overwrite = kwargs.pop('overwrite', True)\n-        self.file_perms = kwargs.pop(None, 'file_perms')\n+        self.file_perms = kwargs.pop('file_perms', self._default_file_perms)\n         self.overwrite_part = kwargs.pop('overwrite_part', False)\n         self.part_filename = kwargs.pop('part_file', None)\n         self.rm_part_on_exc = kwargs.pop('rm_part_on_exc', True)\n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "boltons/fileutils.py"
+    ]
+  },
+  "episode_wall_s": 58.19,
+  "failure_class": null
+}

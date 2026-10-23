@@ -1,0 +1,38 @@
+{
+  "instance_id": "toolz__keyfilter-negate_condition-009",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "submitted",
+  "steps": 19,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 14565,
+    "output_tokens": 899,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 100028,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 128.43,
+  "compactions": 0,
+  "submit_summary": "The root cause was that `keyfilter` was filtering out keys that satisfied the predicate, whereas it should have included them. The fix involved changing the condition in the `keyfilter` function to include keys that meet the predicate.",
+  "error": "",
+  "tool_errors": 1,
+  "tool_calls": 18,
+  "retries": 0,
+  "patch": "diff --git a/toolz/dicttoolz.py b/toolz/dicttoolz.py\nindex 873ca9f..457bc26 100644\n--- a/toolz/dicttoolz.py\n+++ b/toolz/dicttoolz.py\n@@ -153,7 +153,7 @@ def keyfilter(predicate, d, factory=dict):\n     \"\"\"\n     rv = factory()\n     for k, v in d.items():\n-        if not predicate(k):\n+        if predicate(k):\n             rv[k] = v\n     return rv\n \n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "toolz/dicttoolz.py"
+    ]
+  },
+  "episode_wall_s": 130.09,
+  "failure_class": null
+}

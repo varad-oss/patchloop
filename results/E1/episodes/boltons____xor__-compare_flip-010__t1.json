@@ -1,0 +1,38 @@
+{
+  "instance_id": "boltons____xor__-compare_flip-010",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "submitted",
+  "steps": 16,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 25031,
+    "output_tokens": 913,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 59244,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 150.98,
+  "compactions": 1,
+  "submit_summary": "The `__xor__` method in `_ComplementSet` had a logical error where it incorrectly returned `NotImplemented` even when `inc` was not `NotImplemented`. This prevented the symmetric difference operation (`^`) between `_ComplementSet` and `set` objects. The fix involved correcting the condition to properly handle `inc` and ensure the operation works as expected. The test `test_complement_set` now passes successfully.",
+  "error": "",
+  "tool_errors": 1,
+  "tool_calls": 16,
+  "retries": 0,
+  "patch": "diff --git a/boltons/setutils.py b/boltons/setutils.py\nindex 6a49f20..6505b8a 100644\n--- a/boltons/setutils.py\n+++ b/boltons/setutils.py\n@@ -784,8 +784,8 @@ class _ComplementSet:\n         inc, exc = _norm_args_notimplemented(other)\n         if inc is NotImplemented:\n             return NotImplemented\n-        if inc is not NotImplemented:\n-            return NotImplemented\n+            if inc is not NotImplemented:\n+                return NotImplemented\n         if self._included is None:\n             if exc is None:  # - +\n                 return _ComplementSet(excluded=self._excluded - inc)\n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "boltons/setutils.py"
+    ]
+  },
+  "episode_wall_s": 153.95,
+  "failure_class": null
+}

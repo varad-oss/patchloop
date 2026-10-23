@@ -1,0 +1,36 @@
+{
+  "instance_id": "toolz____reduce__-swap_args-015",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "bash_only",
+  "stop_reason": "step_limit",
+  "steps": 40,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 28841,
+    "output_tokens": 2457,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 221958,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 272.01,
+  "compactions": 1,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 36,
+  "retries": 0,
+  "patch": "",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "empty_patch",
+    "tampered": false,
+    "applied": false,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": []
+  },
+  "episode_wall_s": 272.48,
+  "failure_class": "budget_exhausted"
+}

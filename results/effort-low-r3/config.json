@@ -1,0 +1,22 @@
+{
+  "run_id": "effort-low-r3",
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "trials": 1,
+  "effort": "low",
+  "budget": {
+    "max_steps": 40,
+    "max_cost_usd": 0.15,
+    "max_wall_s": 900.0,
+    "soft_prompt_tokens": 12000,
+    "max_retries": 6
+  },
+  "pricing_checked": "2026-10-23",
+  "tasks": [
+    "boltons____bool__-change_constant-016",
+    "boltons____init__-swap_args-011",
+    "boltons____xor__-compare_flip-010",
+    "boltons___get_apparent_index-compare_flip-001",
+    "boltons__backoff_iter-compare_flip-017"
+  ]
+}

@@ -12,6 +12,11 @@ results/*
 results/oracle/episodes/
 results/oracle/viewer.html
 results/*/trajectories/
+!results/E1*/trajectories/
+!results/E2*/trajectories/
+!results/effort-low-r3/
+!results/effort-low-r3/trajectories/
+!results/resolve_rates.svg
 .DS_Store
 build/
 dist/

@@ -1,0 +1,38 @@
+{
+  "instance_id": "toolz__cons-swap_args-010",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "submitted",
+  "steps": 6,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 1056,
+    "output_tokens": 275,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 10043,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 17.91,
+  "compactions": 0,
+  "submit_summary": "The `cons` function was incorrectly using `itertools.chain(seq, [el])`, which appended `el` to the end of `seq`. The correct behavior is to prepend `el` to the beginning of `seq`, which requires `itertools.chain([el], seq)`. This change fixes the test to pass.",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 6,
+  "retries": 0,
+  "patch": "diff --git a/toolz/itertoolz.py b/toolz/itertoolz.py\nindex 5368782..05c36cc 100644\n--- a/toolz/itertoolz.py\n+++ b/toolz/itertoolz.py\n@@ -514,7 +514,7 @@ def cons(el, seq):\n     >>> list(cons(1, [2, 3]))\n     [1, 2, 3]\n     \"\"\"\n-    return itertools.chain(seq, [el])\n+    return itertools.chain([el], seq)\n \n \n def interpose(el, seq):\n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "toolz/itertoolz.py"
+    ]
+  },
+  "episode_wall_s": 19.28,
+  "failure_class": null
+}

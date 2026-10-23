@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from html import escape
+from math import comb
 from pathlib import Path
 
 from ..agent.trajectory import read_trajectory
@@ -116,6 +117,59 @@ LIMITATIONS = """## Limitations
 """
 
 
+def mcnemar_exact(b: int, c: int) -> float:
+    """Two-sided exact McNemar test on the discordant pairs (b: only A solved, c: only B solved)."""
+    n = b + c
+    if n == 0:
+        return 1.0
+    tail = sum(comb(n, k) for k in range(min(b, c) + 1)) / 2**n
+    return min(1.0, 2 * tail)
+
+
+def paired_section(a: str, b: str) -> str:
+    ea = {e["instance_id"]: e["grade"]["resolved"] for e in load_episodes(a) if e["trial"] == 1}
+    eb = {e["instance_id"]: e["grade"]["resolved"] for e in load_episodes(b) if e["trial"] == 1}
+    common = sorted(set(ea) & set(eb))
+    only_a = [t for t in common if ea[t] and not eb[t]]
+    only_b = [t for t in common if eb[t] and not ea[t]]
+    both = [t for t in common if ea[t] and eb[t]]
+    p = mcnemar_exact(len(only_a), len(only_b))
+    lines = [f"## Paired comparison: {a} vs {b}", "",
+             f"Same {len(common)} tasks, trial 1. Both resolved: {len(both)}. Only {a}: {len(only_a)}. "
+             f"Only {b}: {len(only_b)}. Exact McNemar test on the discordant pairs: **p = {p:.3f}**.", "",
+             f"- only {a}: " + (", ".join(f"`{t}`" for t in only_a) or "none"),
+             f"- only {b}: " + (", ".join(f"`{t}`" for t in only_b) or "none"), ""]
+    return "\n".join(lines)
+
+
+def diagnostics_section(run_ids: list[str]) -> str:
+    """Behavioural diagnostics computed from trajectories: localization, editing, idle turns, compaction."""
+    tasks = _tasks_by_id()
+    rows = ["## Behavioural diagnostics", "",
+            "| run | edited the buggy file | unresolved with empty patch | steps without a tool call | "
+            "resolved, episodes with compaction | resolved, episodes without |", "|---|---|---|---|---|---|"]
+    for r in run_ids:
+        eps = load_episodes(r)
+        edited = sum(tasks[e["instance_id"]]["difficulty"]["file"] in e["grade"].get("touched", []) for e in eps)
+        empty = sum(1 for e in eps if not e["grade"]["resolved"] and e["grade"].get("reason") == "empty_patch")
+        unresolved = sum(1 for e in eps if not e["grade"]["resolved"])
+        steps = idle = 0
+        for e in eps:
+            path = RESULTS_DIR / r / "trajectories" / f"{e['instance_id']}__t{e['trial']}.jsonl"
+            for rec in read_trajectory(path) if path.exists() else []:
+                if rec.get("event") == "step":
+                    steps += 1
+                    idle += not rec.get("tool_calls")
+        comp = [e for e in eps if e.get("compactions")]
+        nocomp = [e for e in eps if not e.get("compactions")]
+        res = lambda xs: f"{sum(e['grade']['resolved'] for e in xs)}/{len(xs)}"  # noqa: E731
+        rows.append(f"| {r} | {edited}/{len(eps)} | {empty}/{unresolved} | {idle}/{steps} "
+                    f"({idle / max(1, steps):.0%}) | {res(comp)} | {res(nocomp)} |")
+    rows += ["", "Compaction correlates with failure, but long episodes are also the hard ones, so this is not "
+             "evidence that compaction causes failure.", ""]
+    return "\n".join(rows)
+
+
 def write_report(run_ids: list[str], out: Path = ROOT / "docs" / "EVAL_REPORT.md") -> Path:
     summaries = [summarize(r) for r in run_ids]
     chart = RESULTS_DIR / "resolve_rates.svg"
@@ -130,6 +184,10 @@ def write_report(run_ids: list[str], out: Path = ROOT / "docs" / "EVAL_REPORT.md
                     f"{m['resolve_rate']:.1%} | {m['wilson95'][0]:.1%}-{m['wilson95'][1]:.1%} | ${m['cost_mean']:.4f} |")
     body += ["", "![resolve rates](../results/resolve_rates.svg)", "", "## Runs", ""]
     body += [run_section(s) for s in summaries]
+    if {"E1", "E2"} <= set(run_ids):
+        body.append(paired_section("E1", "E2"))
+    body.append(diagnostics_section(run_ids))
+    body += ["Annotated failure examples and interpretation: [EVAL_ANALYSIS.md](EVAL_ANALYSIS.md).", ""]
     body += ["## Failure analysis", ""]
     for r in run_ids:
         body += [f"### {r}", "", failure_examples(r), ""]

@@ -1,0 +1,44 @@
+{
+  "instance_id": "boltons__get_authority-compare_flip-006",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "step_limit",
+  "steps": 40,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 47671,
+    "output_tokens": 3370,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 229995,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 384.22,
+  "compactions": 2,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 1,
+  "tool_calls": 39,
+  "retries": 0,
+  "patch": "diff --git a/boltons/urlutils.py b/boltons/urlutils.py\nindex 0e36e4f..852b837 100644\n--- a/boltons/urlutils.py\n+++ b/boltons/urlutils.py\n@@ -774,7 +774,7 @@ class URL:\n         if authority:\n             _add('//')\n             _add(authority)\n-        elif (scheme and path[:2] != '//' and self.uses_netloc):\n+        elif (scheme and path[:2] != '//' and self.uses_netloc and not self.port):\n             _add('//')\n         if path:\n             if scheme and authority and path[:1] != '/':\n",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "fail_to_pass_still_failing",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [
+      "tests/test_urlutils.py::test_find_all_links",
+      "tests/test_urlutils.py::test_roundtrip[http://example.com:8080/search?q=123&business=Nothing%20Special]",
+      "tests/test_urlutils.py::test_roundtrip[http://hatnote.com:9000?arg=1&arg=2&arg=3]",
+      "tests/test_urlutils.py::test_roundtrip[https://[::101.45.75.219]:80/?hi=bye]",
+      "tests/test_urlutils.py::test_roundtrip[ssh://192.0.2.16:2222/]"
+    ],
+    "p2p_failed": [],
+    "touched": [
+      "boltons/urlutils.py"
+    ]
+  },
+  "episode_wall_s": 387.38,
+  "failure_class": "budget_exhausted"
+}

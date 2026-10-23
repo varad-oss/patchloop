@@ -10,14 +10,11 @@ boundaries. The learning notes are written for study afterwards. The pilot-befor
 | M2 | Sandbox + tools | All isolation flags; 6 tools; security tests pass; FakeModel test in Docker | done |
 | M3 | Benchmark generator | Strategies A + B implemented; validation; leak-checked reports; >= 30 tasks; `make bench` | done (36 tasks, strategy A; B not run - needs API) |
 | M4 | Runner, grader, metrics, report, viewer | `make eval-smoke` works; pilot cost printed; viewer opens | done (oracle 36/36) |
-| M5 | Experiments E1, E2 | Results with intervals and failure analysis, after pilot approval | **blocked: needs API key + approval** |
+| M5 | Experiments E1, E2 | Results with intervals and failure analysis, after pilot approval | done on a free local model (ADR-011): E1 33.3%, E2 8.3%, p = 0.022 |
 | M6 | MCP server | Server + SDK-client test; configs; demo checklist | done |
 | M7 | Docs and demo | README, ARCHITECTURE (Mermaid), demo script | done (GIF to record) |
 
-## Remaining steps for M5
+## How M5 was run
 
-1. Put `ANTHROPIC_API_KEY` in `.env`; re-check prices in `config/pricing.toml`.
-2. Effort (ADR-008): `patchloop eval --run-id effort-low --effort low --limit 5 --pilot` and the same with `medium`.
-3. `make eval-pilot RUN=E1`, approve the printed cost, then `make eval RUN=E1`.
-4. `make eval-pilot RUN=E2 TOOLSET=bash_only`, approve, then `make eval RUN=E2 TOOLSET=bash_only`.
-5. `patchloop report --all` regenerates `docs/EVAL_REPORT.md`. Hand-review 10 bug reports.
+Free, on the local model: `scripts/run_local_experiments.sh` (thinking-on check, then E1, then E2), then
+`patchloop report --all`. To repeat on Claude with a key: `make eval-pilot RUN=E1`, approve the cost, `make eval RUN=E1`.

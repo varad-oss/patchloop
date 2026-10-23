@@ -1,0 +1,36 @@
+{
+  "instance_id": "boltons__infer_positional_format_args-off_by_one-018",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "step_limit",
+  "steps": 40,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 31523,
+    "output_tokens": 5952,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 198887,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 480.75,
+  "compactions": 2,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 29,
+  "retries": 0,
+  "patch": "",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "empty_patch",
+    "tampered": false,
+    "applied": false,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": []
+  },
+  "episode_wall_s": 481.2,
+  "failure_class": "budget_exhausted"
+}

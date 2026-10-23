@@ -79,3 +79,12 @@ def test_failure_classes():
     assert classify_failure(_ep(grade={"touched": ["other.py"]}), TASK, []) == "never_found_the_bug"
     assert classify_failure(_ep(grade={"touched": ["pkg/mod.py"], "reason": "broke_pass_to_pass"}), TASK, []) == "broke_other_tests"
     assert classify_failure(_ep(), TASK, []) == "wrong_fix"
+
+
+def test_mcnemar_exact_hand_computed():
+    from patchloop.evals.report import mcnemar_exact
+
+    # 11 vs 2 discordant: 2 * sum_{k<=2} C(13,k) / 2^13 = 2 * (1 + 13 + 78) / 8192
+    assert mcnemar_exact(11, 2) == pytest.approx(2 * 92 / 8192)
+    assert mcnemar_exact(0, 0) == 1.0
+    assert mcnemar_exact(3, 3) == 1.0

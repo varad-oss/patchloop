@@ -1,0 +1,40 @@
+{
+  "instance_id": "toolz__apply-off_by_one-008",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "step_limit",
+  "steps": 40,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 14933,
+    "output_tokens": 4097,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 233121,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 285.84,
+  "compactions": 0,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 21,
+  "retries": 0,
+  "patch": "diff --git a/toolz/functoolz.py b/toolz/functoolz.py\nindex 51976ad..16c1ab5 100644\n--- a/toolz/functoolz.py\n+++ b/toolz/functoolz.py\n@@ -42,6 +42,12 @@ def apply(*func_and_args, **kwargs):\n         raise TypeError('func argument is required')\n     func, args = func_and_args[0], func_and_args[2:]\n     return func(*args, **kwargs)\n+    # Handle the case where args is a single argument\n+    if len(args) == 1 and not isinstance(args[0], (list, tuple, dict)):\n+        return func(args[0], **kwargs)\n+    # Ensure args is a tuple\n+    if len(args) == 1:\n+        return func(*args, **kwargs)\n \n \n def thread_first(val, *forms):\n",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "fail_to_pass_still_failing",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [
+      "toolz/tests/test_functoolz.py::test_apply"
+    ],
+    "p2p_failed": [],
+    "touched": [
+      "toolz/functoolz.py"
+    ]
+  },
+  "episode_wall_s": 287.17,
+  "failure_class": "budget_exhausted"
+}

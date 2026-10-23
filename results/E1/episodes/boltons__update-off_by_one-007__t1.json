@@ -1,0 +1,42 @@
+{
+  "instance_id": "boltons__update-off_by_one-007",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "step_limit",
+  "steps": 40,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 26189,
+    "output_tokens": 2659,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 243084,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 244.38,
+  "compactions": 1,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 3,
+  "tool_calls": 37,
+  "retries": 0,
+  "patch": "diff --git a/boltons/cacheutils.py b/boltons/cacheutils.py\nindex ff47712..7df058f 100644\n--- a/boltons/cacheutils.py\n+++ b/boltons/cacheutils.py\n@@ -801,15 +801,19 @@ class ThresholdCounter:\n         to integer counts.\n         \"\"\"\n         if iterable is not None:\n-            if callable(getattr(iterable, 'items', None)):\n+            if isinstance(iterable, dict):\n                 for key, count in iterable.items():\n-                    for i in range(count + 1):\n-                        self.add(key)\n+                    if key in self._count_map:\n+                        self._count_map[key][0] += count\n+                    else:\n+                        self._count_map[key] = [count, self._cur_bucket - 1]\n+                    self.total += count\n             else:\n                 for key in iterable:\n                     self.add(key)\n         if kwargs:\n             self.update(kwargs)\n+        return\n \n \n class MinIDMap:\n",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "fail_to_pass_still_failing",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [
+      "tests/test_cacheutils.py::test_threshold_counter_update_keyword_counts",
+      "tests/test_cacheutils.py::test_threshold_counter_update_mapping_compaction",
+      "tests/test_cacheutils.py::test_threshold_counter_update_mapping_counts"
+    ],
+    "p2p_failed": [],
+    "touched": [
+      "boltons/cacheutils.py"
+    ]
+  },
+  "episode_wall_s": 247.35,
+  "failure_class": "budget_exhausted"
+}

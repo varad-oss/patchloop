@@ -1,0 +1,38 @@
+{
+  "instance_id": "toolz__topk-bool_op_swap-006",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "loop_detected",
+  "steps": 28,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 31503,
+    "output_tokens": 1655,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 127854,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 268.57,
+  "compactions": 1,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 27,
+  "retries": 0,
+  "patch": "diff --git a/toolz/itertoolz.py b/toolz/itertoolz.py\nindex df6eb68..05c36cc 100644\n--- a/toolz/itertoolz.py\n+++ b/toolz/itertoolz.py\n@@ -982,7 +982,7 @@ def topk(k, seq, key=None):\n     See also:\n         heapq.nlargest\n     \"\"\"\n-    if key is not None or not callable(key):\n+    if key is not None and not callable(key):\n         key = getter(key)\n     return tuple(heapq.nlargest(k, seq, key=key))\n \n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "toolz/itertoolz.py"
+    ]
+  },
+  "episode_wall_s": 270.17,
+  "failure_class": null
+}

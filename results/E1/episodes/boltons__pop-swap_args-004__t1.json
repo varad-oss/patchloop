@@ -1,0 +1,38 @@
+{
+  "instance_id": "boltons__pop-swap_args-004",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "submitted",
+  "steps": 8,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 1760,
+    "output_tokens": 359,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 16246,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 25.58,
+  "compactions": 0,
+  "submit_summary": "The `pop` method in `boltons.dictutils` was incorrectly calling `dict.pop(key, self)` which led to a `TypeError` when passing an integer as the key. The fix involved changing the method to call `dict.pop(self, key)` which correctly passes the dictionary and key arguments in the right order, resolving the type error and allowing the test to pass.",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 8,
+  "retries": 0,
+  "patch": "diff --git a/boltons/dictutils.py b/boltons/dictutils.py\nindex 7871672..f0c71ef 100644\n--- a/boltons/dictutils.py\n+++ b/boltons/dictutils.py\n@@ -867,7 +867,7 @@ class OneToOne(dict):\n     def pop(self, key, default=_MISSING):\n         if key in self:\n             dict.__delitem__(self.inv, self[key])\n-            return dict.pop(key, self)\n+            return dict.pop(self, key)\n         if default is not _MISSING:\n             return default\n         raise KeyError()\n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "boltons/dictutils.py"
+    ]
+  },
+  "episode_wall_s": 28.57,
+  "failure_class": null
+}

@@ -1,0 +1,38 @@
+{
+  "instance_id": "toolz___merge_sorted_binary_key-off_by_one-013",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "submitted",
+  "steps": 39,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 23921,
+    "output_tokens": 3585,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 239083,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 290.25,
+  "compactions": 1,
+  "submit_summary": "The `merge_sorted` function was failing due to a `RecursionError` caused by incorrect handling of the base case in the `_merge_sorted_binary_key` function. The issue was resolved by adjusting the split point in the recursive calls to ensure proper termination. The fix ensures that the function correctly handles single-element sequences and prevents infinite recursion.",
+  "error": "",
+  "tool_errors": 17,
+  "tool_calls": 35,
+  "retries": 0,
+  "patch": "diff --git a/toolz/itertoolz.py b/toolz/itertoolz.py\nindex df045f8..05c36cc 100644\n--- a/toolz/itertoolz.py\n+++ b/toolz/itertoolz.py\n@@ -174,7 +174,7 @@ def _merge_sorted_binary(seqs):\n \n def _merge_sorted_binary_key(seqs, key):\n     mid = len(seqs) // 2\n-    L1 = seqs[:mid - 1]\n+    L1 = seqs[:mid]\n     if len(L1) == 1:\n         seq1 = iter(L1[0])\n     else:\n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "toolz/itertoolz.py"
+    ]
+  },
+  "episode_wall_s": 291.64,
+  "failure_class": null
+}

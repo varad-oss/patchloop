@@ -1,0 +1,97 @@
+{
+  "run_id": "effort-low-r3",
+  "config": {
+    "run_id": "effort-low-r3",
+    "model": "ollama:patchloop-qwen3:8b-16k",
+    "toolset": "structured",
+    "trials": 1,
+    "effort": "low",
+    "budget": {
+      "max_steps": 40,
+      "max_cost_usd": 0.15,
+      "max_wall_s": 900.0,
+      "soft_prompt_tokens": 12000,
+      "max_retries": 6
+    },
+    "pricing_checked": "2026-10-23",
+    "tasks": [
+      "boltons____bool__-change_constant-016",
+      "boltons____init__-swap_args-011",
+      "boltons____xor__-compare_flip-010",
+      "boltons___get_apparent_index-compare_flip-001",
+      "boltons__backoff_iter-compare_flip-017"
+    ]
+  },
+  "metrics": {
+    "episodes": 5,
+    "tasks": 5,
+    "resolved": 0,
+    "resolve_rate": 0.0,
+    "wilson95": [
+      0.0,
+      0.43448246865939283
+    ],
+    "steps_mean": 11.6,
+    "steps_median": 12,
+    "cost_mean": 0.0,
+    "cost_median": 0.0,
+    "cost_total": 0.0,
+    "wall_mean_s": 987.528,
+    "wall_median_s": 931.26,
+    "tokens_mean": {
+      "input_tokens": 5890.2,
+      "output_tokens": 15598.4,
+      "thinking_tokens": 0.0,
+      "cache_read_tokens": 27847.4,
+      "cache_write_tokens": 0.0
+    },
+    "compactions_total": 0,
+    "episodes_with_compaction": 0,
+    "stop_reasons": {
+      "time_limit": 5
+    },
+    "failure_classes": {
+      "budget_exhausted": 5
+    },
+    "by_difficulty": {
+      "repo": {
+        "boltons": {
+          "n": 5,
+          "resolved": 0
+        }
+      },
+      "strategy": {
+        "ast": {
+          "n": 5,
+          "resolved": 0
+        }
+      },
+      "mutation": {
+        "change_constant": {
+          "n": 1,
+          "resolved": 0
+        },
+        "compare_flip": {
+          "n": 3,
+          "resolved": 0
+        },
+        "swap_args": {
+          "n": 1,
+          "resolved": 0
+        }
+      },
+      "n_fail": {
+        "1": {
+          "n": 5,
+          "resolved": 0
+        }
+      },
+      "func_named_in_test": {
+        "False": {
+          "n": 5,
+          "resolved": 0
+        }
+      }
+    }
+  }
+}

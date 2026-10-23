@@ -1,0 +1,38 @@
+{
+  "instance_id": "boltons__rotate_file-swap_args-015",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "bash_only",
+  "stop_reason": "submitted",
+  "steps": 8,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 3741,
+    "output_tokens": 556,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 21659,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 43.55,
+  "compactions": 0,
+  "submit_summary": "The `rotate_file` function had an incorrect loop range that generated an empty list, causing an `IndexError`. The fix involved changing the loop to iterate from 1 to `keep + 1`, ensuring the correct sequence of indices for file rotation. The tests now pass.",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 8,
+  "retries": 0,
+  "patch": "diff --git a/boltons/fileutils.py b/boltons/fileutils.py\nindex ddf4acb..ba5d078 100644\n--- a/boltons/fileutils.py\n+++ b/boltons/fileutils.py\n@@ -710,7 +710,7 @@ def rotate_file(filename, *, keep: int = 5):\n \n     fn_root, fn_ext = os.path.splitext(filename)\n     kept_names = []\n-    for i in range(keep + 1, 1):\n+    for i in range(1, keep + 1):\n         if fn_ext:\n             kept_names.append(f'{fn_root}.{i}{fn_ext}')\n         else:\n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "boltons/fileutils.py"
+    ]
+  },
+  "episode_wall_s": 46.59,
+  "failure_class": null
+}

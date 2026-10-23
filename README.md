@@ -11,11 +11,18 @@ served over MCP.**
 | run | model | toolset | tasks x trials | resolved (95% CI) | mean cost / task | date |
 |---|---|---|---|---|---|---|
 | oracle (harness check) | reverse-applies the bug | structured | 36 x 1 | 36/36 = 100% (90.4-100%) | $0 | 2026-10-23 |
-| E1 baseline | claude-haiku-5-5 | structured | 36 x 1 | _target: not yet run_ | _target < $0.05_ | - |
-| E2 interface ablation | claude-haiku-5-5 | bash_only | 36 x 1 | _target: not yet run_ | - | - |
+| **E1** baseline | qwen3:8b, local (Ollama), thinking off | structured | 36 x 1 | **12/36 = 33.3%** (20.2-49.7%) | $0 | 2026-10-23 |
+| **E2** interface ablation | qwen3:8b, local (Ollama), thinking off | bash_only | 36 x 1 | **3/36 = 8.3%** (2.9-21.8%) | $0 | 2026-10-24 |
+
+**Paired on the same tasks, the structured toolset wins 11 to 2** (exact McNemar test p = 0.022). Both
+runs find the buggy file every time; the difference is that the 8B model actually *edits* with `str_replace`
+(20/36 episodes) and mostly doesn't with raw bash (10/36). Annotated failures are in
+[docs/EVAL_ANALYSIS.md](docs/EVAL_ANALYSIS.md).
 
 All numbers are generated from `results/` by `patchloop report --all` into [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
-E1 and E2 need an API key and an approved pilot (`make eval-pilot RUN=E1`).
+The runs used a free local model on an Apple M5 laptop, not the Claude Haiku 5.5 the spec planned, because there
+was no budget for API calls ([ADR-011](docs/DECISIONS.md)). The Claude adapter and the paid-run pilot gate are
+still implemented and tested.
 
 ## How the loop works
 

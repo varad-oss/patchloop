@@ -1,0 +1,40 @@
+{
+  "instance_id": "boltons__backoff_iter-compare_flip-017",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "step_limit",
+  "steps": 40,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 36367,
+    "output_tokens": 3352,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 242916,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 337.88,
+  "compactions": 1,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 6,
+  "tool_calls": 37,
+  "retries": 0,
+  "patch": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex 3e95996..a8761aa 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -577,6 +577,15 @@ def backoff(start, stop, count=None, factor=2.0, jitter=False):\n     \"\"\"\n     if count == 'repeat':\n         raise ValueError(\"'repeat' supported in backoff_iter, not backoff\")\n+    if start == stop:\n+        return [float(start)]\n+    if count is None:\n+        if factor <= 1.0:\n+            raise ValueError(\"expected factor > 1.0 when count is None and start != stop\")\n+    if jitter:\n+        factor = max(factor, 1.0)\n+    if count is not None:\n+        count = min(count, 1000)\n     return list(backoff_iter(start, stop, count=count,\n                              factor=factor, jitter=jitter))\n \n",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "broke_pass_to_pass",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [
+      "tests/test_iterutils.py::test_backoff_jitter"
+    ],
+    "touched": [
+      "boltons/iterutils.py"
+    ]
+  },
+  "episode_wall_s": 340.94,
+  "failure_class": "budget_exhausted"
+}

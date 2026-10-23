@@ -1,0 +1,38 @@
+{
+  "instance_id": "boltons__backoff_iter-compare_flip-017",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "bash_only",
+  "stop_reason": "submitted",
+  "steps": 12,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 15193,
+    "output_tokens": 759,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 55931,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 131.5,
+  "compactions": 0,
+  "submit_summary": "The issue was due to an incorrect validation check in the `backoff_iter` function. The function raised an error when `factor == 1.0` and `count is None` and `start != stop`, but the test case had `start == stop`. The fix involved correcting the condition to accurately check if `start` and `stop` are equal, ensuring the error message reflects this correctly. The test now passes.",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 11,
+  "retries": 0,
+  "patch": "diff --git a/boltons/iterutils.py b/boltons/iterutils.py\nindex 3e95996..adefc31 100644\n--- a/boltons/iterutils.py\n+++ b/boltons/iterutils.py\n@@ -650,7 +650,7 @@ def backoff_iter(start, stop, count=None, factor=2.0, jitter=False):\n     if count is None:\n         denom = start if start else 1\n         if factor == 1.0:\n-            if start == stop:\n+            if start != stop:\n                 raise ValueError('expected factor > 1.0 when count is None'\n                                  ' and start != stop, not %r' % factor)\n             count = 1\n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "boltons/iterutils.py"
+    ]
+  },
+  "episode_wall_s": 134.93,
+  "failure_class": null
+}

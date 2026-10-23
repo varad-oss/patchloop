@@ -1,0 +1,36 @@
+{
+  "instance_id": "boltons___get_apparent_index-compare_flip-001",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "bash_only",
+  "stop_reason": "step_limit",
+  "steps": 40,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 51363,
+    "output_tokens": 2591,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 228152,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 484.18,
+  "compactions": 2,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 40,
+  "retries": 0,
+  "patch": "",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "empty_patch",
+    "tampered": false,
+    "applied": false,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": []
+  },
+  "episode_wall_s": 484.82,
+  "failure_class": "budget_exhausted"
+}

@@ -1,0 +1,40 @@
+{
+  "instance_id": "boltons____init__-swap_args-011",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "time_limit",
+  "steps": 13,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 3118,
+    "output_tokens": 16532,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 32805,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 1213.78,
+  "compactions": 0,
+  "submit_summary": "",
+  "error": "",
+  "tool_errors": 3,
+  "tool_calls": 13,
+  "retries": 0,
+  "patch": "diff --git a/boltons/fileutils.py b/boltons/fileutils.py\nindex 5562d91..8dc1c85 100644\n--- a/boltons/fileutils.py\n+++ b/boltons/fileutils.py\n@@ -404,7 +404,16 @@ class AtomicSaver:\n         else:\n             self.part_path = os.path.join(self.dest_dir, self.part_filename)\n         self.mode = 'w+' if self.text_mode else 'w+b'\n-        self.open_flags = _TEXT_OPENFLAGS if self.text_mode else _BIN_OPENFLAGS\n+        self.open_flags = 0\n+        if self.mode == 'w':\n+            self.open_flags |= os.O_WRONLY\n+        elif self.mode == 'a':\n+            self.open_flags |= os.O_APPEND\n+        elif self.mode == 'r+':\n+            self.open_flags |= os.O_RDWR\n+        else:\n+            # Default to read/write\n+            self.open_flags |= os.O_RDWR\n \n         self.part_file = None\n \n",
+  "tampered": false,
+  "grade": {
+    "resolved": false,
+    "reason": "fail_to_pass_still_failing",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [
+      "tests/test_fileutils.py::test_atomicsaver_pathlike"
+    ],
+    "p2p_failed": [],
+    "touched": [
+      "boltons/fileutils.py"
+    ]
+  },
+  "episode_wall_s": 1216.71,
+  "failure_class": "budget_exhausted"
+}

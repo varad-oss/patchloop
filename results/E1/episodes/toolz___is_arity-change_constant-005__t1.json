@@ -1,0 +1,38 @@
+{
+  "instance_id": "toolz___is_arity-change_constant-005",
+  "trial": 1,
+  "model": "ollama:patchloop-qwen3:8b-16k",
+  "toolset": "structured",
+  "stop_reason": "submitted",
+  "steps": 14,
+  "cost_usd": 0.0,
+  "usage": {
+    "input_tokens": 10167,
+    "output_tokens": 715,
+    "thinking_tokens": 0,
+    "cache_read_tokens": 44240,
+    "cache_write_tokens": 0
+  },
+  "wall_s": 68.67,
+  "compactions": 0,
+  "submit_summary": "The function `_is_arity` was always returning `False` regardless of the arity condition. The issue was fixed by changing the logic to return `True` if all checks pass, `None` if any checks pass, and `False` otherwise. The test now passes.",
+  "error": "",
+  "tool_errors": 0,
+  "tool_calls": 13,
+  "retries": 0,
+  "patch": "diff --git a/toolz/_signatures.py b/toolz/_signatures.py\nindex b3ec94d..a14ca33 100644\n--- a/toolz/_signatures.py\n+++ b/toolz/_signatures.py\n@@ -729,7 +729,7 @@ def _is_arity(n, func):\n     sigs = signatures[func]\n     checks = [check_arity(n, sig) for sig in sigs]\n     if all(checks):\n-        return False\n+        return True\n     elif any(checks):\n         return None\n     return False\n",
+  "tampered": false,
+  "grade": {
+    "resolved": true,
+    "reason": "resolved",
+    "tampered": false,
+    "applied": true,
+    "f2p_failed": [],
+    "p2p_failed": [],
+    "touched": [
+      "toolz/_signatures.py"
+    ]
+  },
+  "episode_wall_s": 69.99,
+  "failure_class": null
+}

@@ -98,6 +98,10 @@ implemented but was not run (no API key in this environment; needs approval).
 
 ## ADR-008 Effort level
 
+**Update 2026-10-24 (measured, local model):** with qwen3:8b, thinking on (`--effort low`) resolved 0/5 with every
+episode at the 15-minute limit (`results/effort-low-r3`); thinking off (`--effort none`) is the setting for E1/E2.
+The Claude low-vs-medium measurement below still applies to anyone running with a key.
+
 Spec: measure `low` vs `medium` on 5 tasks and pick one. **Not yet measured** (no API key available during the
 build). Default is `low` because it is the cheapest; run
 `patchloop eval --run-id effort-low --effort low --limit 5 --pilot` and the same with `medium`, then record the
