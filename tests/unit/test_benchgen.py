@@ -81,3 +81,57 @@ def test_leak_check():
     assert issues.leak_check("it does return (ordered[mid] + ordered[mid + 1]) / 2", "x/y.py", 9, "",
                              "return (ordered[mid] + ordered[mid + 1]) / 2")
     assert issues.leak_check("test_stats.py fails", "toyrepo/stats.py", 17, "", "") == []
+
+
+def test_llm_rewrite_retries_identical_then_accepts():
+    from patchloop.agent.models import FakeModel
+    from patchloop.benchgen import llm_rewrite
+
+    src = "def g(xs):\n    total = 0\n    for x in xs:\n        total += x\n    return total\n"
+    files = {"m.py": src}
+    site = llm_rewrite.function_sites(files)[0]
+    same = {"text": "BUG: none\n```python\n" + site.source + "\n```"}
+    buggy = {"text": "BUG: start at 1\n```python\n" + site.source.replace("total = 0", "total = 1") + "\n```"}
+    model = FakeModel([same, buggy])
+    mutation, turn, why = llm_rewrite.rewrite(model, files, site)
+    assert why == "" and mutation is not None and model.calls_made == 2
+    assert "total = 1" in mutation.new_source
+
+
+def test_llm_rewrite_rejects_signature_change_and_hints():
+    from patchloop.agent.models import FakeModel
+    from patchloop.benchgen import llm_rewrite
+
+    src = "def g(xs):\n    total = 0\n    for x in xs:\n        total += x\n    return total\n"
+    files = {"m.py": src}
+    site = llm_rewrite.function_sites(files)[0]
+    sig = FakeModel([{"text": "BUG: x\n```python\ndef g(xs, y):\n    return 0\n```"}])
+    assert llm_rewrite.rewrite(sig, files, site)[2] == "signature changed"
+    hint = FakeModel([{"text": "BUG: x\n```python\n" + site.source.replace("total = 0", "total = 1  # bug here") + "\n```"}])
+    assert llm_rewrite.rewrite(hint, files, site)[2] == "hinting comment"
+
+
+def test_llm_rewrite_method_indentation_is_normalised():
+    from patchloop.agent.models import FakeModel
+    from patchloop.benchgen import llm_rewrite
+
+    src = "class A:\n    def m(self, xs):\n        total = 0\n        for x in xs:\n            total += x\n        return total\n"
+    files = {"a.py": src}
+    site = llm_rewrite.function_sites(files)[0]
+    already_indented = "    def m(self, xs):\n        total = 1\n        for x in xs:\n            total += x\n        return total\n"
+    mutation, _, why = llm_rewrite.rewrite(FakeModel([{"text": f"BUG: x\n```python\n{already_indented}```"}]), files, site)
+    assert why == ""
+    changed = [(a, b) for a, b in zip(src.splitlines(), mutation.new_source.splitlines(), strict=True) if a != b]
+    assert changed == [("        total = 0", "        total = 1")]  # exactly one line, indentation intact
+
+
+def test_llm_rewrite_rejects_large_rewrites():
+    from patchloop.agent.models import FakeModel
+    from patchloop.benchgen import llm_rewrite
+
+    src = "def g(xs):\n" + "".join(f"    a{i} = {i}\n" for i in range(10)) + "    return xs\n"
+    files = {"m.py": src}
+    site = llm_rewrite.function_sites(files)[0]
+    rewritten = site.source.replace(" = ", " = 1 + ")
+    why = llm_rewrite.rewrite(FakeModel([{"text": f"BUG: x\n```python\n{rewritten}\n```"}]), files, site)[2]
+    assert why.startswith("too many changed lines")

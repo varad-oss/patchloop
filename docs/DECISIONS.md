@@ -153,3 +153,21 @@ specific to any task.
 
 **Disclosure.** The change was made after seeing 5 pilot trajectories and before E1/E2. E1 and E2 both use it. The
 effort check (`effort-none`, `effort-low`) ran on the earlier version.
+
+## ADR-013 Strategy B (LLM-rewrite bugs) generated with the local model, not evaluated
+
+**What ran.** `scripts/run_strategy_b.sh` with `qwen3:8b` (thinking off, replies capped at 2,000 tokens). The 8B model
+often returned the function unchanged, so the prompt asks it to state the bug on a `BUG:` line first (discarded,
+never shown to the agent), and an identical rewrite gets one retry. Each candidate then goes through the same
+validation as strategy A (fails specific tests twice, consistently) and the same leak-checked template bug report.
+
+**Result.** 9 candidates were accepted before the run was stopped, so Ollama could be handed to another project.
+- 6 toolz tasks are clean single-line bugs (`while True` -> `while False`, `seq[-n:]` -> `seq[-n-1:]`, ...). They are in
+  `bench/tasks_llm/`, and the oracle resolves 6/6 (`results/oracle-llm`).
+- 3 boltons tasks exposed a splicing bug: methods returned with their own indentation were indented twice, turning
+  a one-line bug into a 10-26-line whitespace diff. They were set aside in `bench/tasks_llm_rejected/`. Fixed:
+  model code is now dedented before parsing, and rewrites changing more than 4 lines are rejected (both unit-tested).
+
+**Not done.** The agent was not evaluated on the strategy-B tasks (an "E1b" run). That needs the GPU and is left as
+future work: `patchloop eval --run-id E1b --tasks-dir bench/tasks_llm ...`. The headline benchmark stays the 36
+strategy-A tasks. Six is below the spec's "at least 10 from strategy B if budget allows".

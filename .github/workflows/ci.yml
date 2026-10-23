@@ -1,13 +1,17 @@
-name: ci
-on: [push, pull_request]
+name: CI
+on:
+  push:
+  pull_request:
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.2
         with:
-          python-version: "3.13"
-      - run: pip install -e ".[dev]"
-      - run: ruff check src tests
-      - run: pytest -m "not docker"
+          version: "0.11.26"
+      - run: uv venv --python 3.13 .venv && uv pip install --python .venv/bin/python -e ".[dev]"
+      - name: Lint
+        run: .venv/bin/python -m ruff check src tests
+      - name: Unit tests (no Docker, no model, no network)
+        run: .venv/bin/python -m pytest -m "not docker"

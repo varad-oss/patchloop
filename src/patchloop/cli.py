@@ -75,13 +75,17 @@ def cmd_bench(args) -> int:
     from .benchgen.build import build
 
     _load_env()
-    if (args.issues == "llm" or args.strategy == "llm") and not args.yes:
+    if (args.issues == "llm" or args.strategy == "llm") and _is_paid(args.model) and not args.yes:
         print("LLM issue writing / rewriting costs API money. Re-run with --yes after approving.")
         return 2
-    issue_model = make_adapter(args.model, "low") if args.issues == "llm" else None
-    rewrite_model = make_adapter(args.model, "low") if args.strategy == "llm" else None
+    issue_model = make_adapter(args.model, "none" if args.model.startswith("ollama:") else "low") \
+        if args.issues == "llm" else None
+    effort = "none" if args.model.startswith("ollama:") else "low"
+    rewrite_model = make_adapter(args.model, effort) if args.strategy == "llm" else None
+    if rewrite_model is not None and hasattr(rewrite_model, "max_tokens"):
+        rewrite_model.max_tokens = 2000  # one function; stops a small model from rambling to the cap
     build(args.repo, args.target, seed=args.seed, strategy=args.strategy, issue_model=issue_model,
-          rewrite_model=rewrite_model, max_attempts=args.max_attempts)
+          rewrite_model=rewrite_model, max_attempts=args.max_attempts, out_dir=Path(args.out_dir))
     return 0
 
 
@@ -145,6 +149,13 @@ def cmd_report(args) -> int:
     return 0
 
 
+def cmd_replay(args) -> int:
+    from .evals.replay import render_gif
+
+    print(f"wrote {render_gif(args.run_id, args.episode, Path(args.out))}")
+    return 0
+
+
 def cmd_progress(args) -> int:
     from .progress import parse_runs, watch
 
@@ -169,6 +180,7 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("--issues", choices=["template", "llm"], default="template")
     b.add_argument("--model", default="claude-haiku-5-5")
     b.add_argument("--max-attempts", type=int, default=400)
+    b.add_argument("--out-dir", default=str(TASKS_DIR))
     b.add_argument("--yes", action="store_true")
     b.set_defaults(fn=cmd_bench)
 
@@ -197,6 +209,12 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--run-id")
     r.add_argument("--all", action="store_true")
     r.set_defaults(fn=cmd_report)
+
+    rp = sub.add_parser("replay", help="render one trajectory as an animated GIF")
+    rp.add_argument("--run-id", default="E1")
+    rp.add_argument("--episode", default="toolz__keyfilter-negate_condition-009")
+    rp.add_argument("--out", default=str(ROOT / "docs" / "demo.gif"))
+    rp.set_defaults(fn=cmd_replay)
 
     pr = sub.add_parser("progress", help="live terminal dashboard (read-only) for running experiments")
     pr.add_argument("--runs", nargs="+", default=["effort-low-r3:5", "E1:36", "E2:36"],

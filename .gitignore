@@ -11,6 +11,9 @@ results/*
 !results/oracle/
 results/oracle/episodes/
 results/oracle/viewer.html
+!results/oracle-llm/
+results/oracle-llm/episodes/
+results/oracle-llm/viewer.html
 results/*/trajectories/
 !results/E1*/trajectories/
 !results/E2*/trajectories/

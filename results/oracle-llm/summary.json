@@ -1,0 +1,100 @@
+{
+  "run_id": "oracle-llm",
+  "config": {
+    "run_id": "oracle-llm",
+    "model": "oracle",
+    "toolset": "structured",
+    "trials": 1,
+    "effort": "low",
+    "budget": {
+      "max_steps": 40,
+      "max_cost_usd": 0.15,
+      "max_wall_s": 600,
+      "soft_prompt_tokens": 80000,
+      "max_retries": 6
+    },
+    "pricing_checked": "2026-10-23",
+    "tasks": [
+      "toolz__concat-llm_rewrite-004",
+      "toolz__interpose-llm_rewrite-001",
+      "toolz__is_valid_args-llm_rewrite-006",
+      "toolz__iterate-llm_rewrite-003",
+      "toolz__tail-llm_rewrite-002",
+      "toolz__valfilter-llm_rewrite-005"
+    ]
+  },
+  "metrics": {
+    "episodes": 6,
+    "tasks": 6,
+    "resolved": 6,
+    "resolve_rate": 1.0,
+    "wilson95": [
+      0.6096657083436265,
+      1.0
+    ],
+    "steps_mean": 3.0,
+    "steps_median": 3.0,
+    "cost_mean": 0.0,
+    "cost_median": 0.0,
+    "cost_total": 0.0,
+    "wall_mean_s": 1.37,
+    "wall_median_s": 1.48,
+    "tokens_mean": {
+      "input_tokens": 2900.6666666666665,
+      "output_tokens": 60.0,
+      "thinking_tokens": 0.0,
+      "cache_read_tokens": 0.0,
+      "cache_write_tokens": 0.0
+    },
+    "compactions_total": 0,
+    "episodes_with_compaction": 0,
+    "stop_reasons": {
+      "submitted": 6
+    },
+    "failure_classes": {},
+    "by_difficulty": {
+      "repo": {
+        "toolz": {
+          "n": 6,
+          "resolved": 6
+        }
+      },
+      "strategy": {
+        "llm_rewrite": {
+          "n": 6,
+          "resolved": 6
+        }
+      },
+      "mutation": {
+        "llm_rewrite": {
+          "n": 6,
+          "resolved": 6
+        }
+      },
+      "n_fail": {
+        "1": {
+          "n": 1,
+          "resolved": 1
+        },
+        "2-5": {
+          "n": 4,
+          "resolved": 4
+        },
+        "6+": {
+          "n": 1,
+          "resolved": 1
+        }
+      },
+      "func_named_in_test": {
+        "False": {
+          "n": 1,
+          "resolved": 1
+        },
+        "True": {
+          "n": 5,
+          "resolved": 5
+        }
+      }
+    }
+  }
+}

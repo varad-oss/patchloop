@@ -1,5 +1,13 @@
 # Progress
 
+## 2026-10-24: v0.1.0 published
+
+- Strategy B generated with the local model: 6 clean toolz tasks in `bench/tasks_llm/` (oracle 6/6), 3 malformed
+  boltons tasks set aside after finding and fixing a re-indentation bug (ADR-013). Not evaluated (no E1b run).
+- `patchloop replay` renders trajectories as GIFs (`docs/demo.gif`); `docs/project/BUG_REPORT_REVIEW.md` is the
+  manual review sheet.
+- Repo made presentable (README, LICENSE, CONTRIBUTING, SECURITY, CHANGELOG, uv-based CI) and pushed to GitHub.
+
 ## 2026-10-24: experiments done (free, local)
 
 - **E1** (structured): 12/36 = 33.3% (95% CI 20.2-49.7%). **E2** (bash only): 3/36 = 8.3% (2.9-21.8%).
@@ -24,9 +32,10 @@ Bugs found and fixed during the build:
 - The failure classifier read the trajectory's `end` record as a step.
 - The leak-check regex missed "line 17" (the space between "line" and the number).
 
-## Remaining (Varad)
+## Remaining (Varad, by hand)
 
-- Hand-review 10 bug reports in `bench/tasks/*.json`.
-- Record the README GIF from `results/E1/viewer.html`.
-- Study `docs/learning/`; replace `seed/my_loop.py` with your own; rewrite the loop from memory.
-- Optional, free: E3 best-of-3 (about 8 h local); Strategy B / LLM-written bug reports with the local model.
+1. Review the 10 bug reports in `docs/project/BUG_REPORT_REVIEW.md` (tick the boxes; ~15 min).
+2. Study `docs/learning/` (start with `LOOP_WALKTHROUGH.md`, then M0-M7).
+3. Replace `seed/my_loop.py` with your own loop, then rewrite the core loop from memory in 30 minutes.
+4. Optional: record an MCP demo with Claude Code (`docs/MCP.md` checklist).
+5. Optional, free, when the GPU is free: evaluate the strategy-B tasks (E1b).

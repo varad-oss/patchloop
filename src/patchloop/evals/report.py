@@ -15,7 +15,8 @@ from .runner import load_episodes
 
 def _tasks_by_id() -> dict[str, dict]:
     tasks = {t["instance_id"]: t for t in load_tasks()}
-    tasks.update({t["instance_id"]: t for t in load_tasks(ROOT / "bench" / "toy")})
+    for extra in ("toy", "tasks_llm"):
+        tasks.update({t["instance_id"]: t for t in load_tasks(ROOT / "bench" / extra)})
     return tasks
 
 

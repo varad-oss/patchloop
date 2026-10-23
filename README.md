@@ -1,114 +1,214 @@
-# PatchLoop
+<h1 align="center">PatchLoop</h1>
 
-**A coding agent written from scratch (no agent framework) that fixes failing tests inside a locked-down Docker
-sandbox. It's evaluated on a benchmark of bugs injected into real open-source libraries, and its tools are also
-served over MCP.**
+<p align="center">
+  <b>A coding agent written from scratch that fixes failing tests inside a locked-down Docker sandbox,<br/>
+  evaluated on bugs injected into real open-source libraries, with its tools also served over MCP.</b>
+</p>
 
-> GIF of a trajectory being replayed: _to record_. Open `results/oracle/viewer.html` or run `make demo`.
+<p align="center">
+  <a href="https://github.com/varad-oss/patchloop/actions/workflows/ci.yml"><img src="https://github.com/varad-oss/patchloop/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/python-3.13-blue" alt="Python 3.13">
+  <img src="https://img.shields.io/badge/agent%20framework-none%20(from%20scratch)-6f42c1" alt="No agent framework">
+  <img src="https://img.shields.io/badge/LLM-qwen3%3A8b%20on%20Ollama%20(local%2C%20%240)-success" alt="Local LLM, $0">
+  <img src="https://img.shields.io/badge/sandbox-Docker%2C%20no%20network-informational" alt="Docker sandbox">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-lightgrey" alt="MIT license"></a>
+</p>
+
+<p align="center">
+  <img src="docs/demo.gif" width="860" alt="PatchLoop replay: the agent reads an issue, searches, views code, edits keyfilter, runs tests, and the grader confirms the fix">
+  <br/><sub>A real episode replayed from its trajectory: the local 8B model finds and fixes an inverted condition in
+  <code>toolz.keyfilter</code> in 19 steps, and the grader confirms it in a fresh container.</sub>
+</p>
+
+## Why
+
+Coding agents are usually built on a framework, so the loop is a black box: how the agent recovers from errors, when
+it stops, what it costs and what it can touch are hidden. PatchLoop is the whole thing, small enough to read:
+
+1. **the agent loop is about 200 readable lines** with no agent framework: budgets, retries, loop detection,
+   context compaction and a trajectory log are all visible code;
+2. **model-written commands never touch the host**: every tool call runs in a disposable container with no network,
+   read-only tests and resource limits, and the boundary is tested;
+3. **every claim is measured** on a benchmark built by injecting validated bugs into two real libraries, with
+   confidence intervals and a paired significance test.
+
+Everything runs locally for free: no API keys and no paid services.
 
 ## Results
 
-| run | model | toolset | tasks x trials | resolved (95% CI) | mean cost / task | date |
-|---|---|---|---|---|---|---|
-| oracle (harness check) | reverse-applies the bug | structured | 36 x 1 | 36/36 = 100% (90.4-100%) | $0 | 2026-10-23 |
-| **E1** baseline | qwen3:8b, local (Ollama), thinking off | structured | 36 x 1 | **12/36 = 33.3%** (20.2-49.7%) | $0 | 2026-10-23 |
-| **E2** interface ablation | qwen3:8b, local (Ollama), thinking off | bash_only | 36 x 1 | **3/36 = 8.3%** (2.9-21.8%) | $0 | 2026-10-24 |
+72 episodes (36 tasks × 2 toolsets), local `qwen3:8b` via Ollama with thinking off, on an Apple M5 laptop,
+2026-10-23/24. 95% Wilson intervals in brackets. Full report: [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md) ·
+annotated failures: [docs/EVAL_ANALYSIS.md](docs/EVAL_ANALYSIS.md) · raw data: [`results/`](results/).
 
-**Paired on the same tasks, the structured toolset wins 11 to 2** (exact McNemar test p = 0.022). Both
-runs find the buggy file every time; the difference is that the 8B model actually *edits* with `str_replace`
-(20/36 episodes) and mostly doesn't with raw bash (10/36). Annotated failures are in
-[docs/EVAL_ANALYSIS.md](docs/EVAL_ANALYSIS.md).
+| Run | Toolset | Resolved | Edited the buggy file | Mean time / task | Cost |
+|---|---|---|---|---|---|
+| **E1** | structured: `search`, `view_file`, `str_replace`, `run_tests`, `bash`, `submit` | **12/36 = 33.3%** [20, 50] | 20/36 | 240 s | $0 |
+| **E2** | `bash` + `submit` only | **3/36 = 8.3%** [3, 22] | 10/36 | 308 s | $0 |
+| oracle | reverse-applies each injected bug (harness check) | 36/36 = 100% | — | — | $0 |
 
-All numbers are generated from `results/` by `patchloop report --all` into [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md).
-The runs used a free local model on an Apple M5 laptop, not the Claude Haiku 5.5 the spec planned, because there
-was no budget for API calls ([ADR-011](docs/DECISIONS.md)). The Claude adapter and the paid-run pilot gate are
-still implemented and tested.
+<p align="center"><img src="results/resolve_rates.svg" width="560" alt="Resolve rate with 95% Wilson intervals for E1 and E2"></p>
 
-## How the loop works
+**What it shows**
+- **The interface matters for a small model.** On the same 36 tasks, 11 were solved only with the structured
+  toolset and 2 only with bash (exact McNemar test, **p = 0.022**).
+- **Finding the bug isn't the bottleneck; committing to a fix is.** Every episode reached the buggy file. With
+  `str_replace` the model edited it in 20/36 episodes; with raw bash, in 10/36. Most failures end with an empty patch.
+- **Context resets hurt.** Episodes that needed compaction resolved 4/22 versus 8/14 without (E1). One trajectory
+  shows the model re-reading the same file after each reset. That's correlation, not proof.
+- **Thinking mode is impractical on a laptop GPU**: with qwen3's thinking on, 0/5 tasks resolved, and every episode
+  ran out of its 15-minute budget after 6–17 steps.
+
+These are results for an 8B local model, not a frontier model: absolute rates aren't comparable to published agent
+benchmarks, and the toolset effect is model-dependent (strong models often do fine with bash alone).
+
+## How it works
 
 ```mermaid
 flowchart LR
-    T[task + issue] --> P[build request<br/>system + task + history]
-    P --> M[model adapter]
-    M -->|tool calls| X[execute in sandbox]
-    X -->|truncated observations| H[append to history]
-    H --> P
-    M -->|submit / limit / refusal| S[stop + git diff]
+    T["issue + test command"] --> P["build request<br/>system + task + append-only history"]
+    P --> M["model adapter<br/>Ollama · OpenAI-compatible · Anthropic · fake"]
+    M -->|tool calls| X["Toolbox"]
+    X -->|"docker exec, timeout"| S[("episode container<br/>no network · tests :ro")]
+    S -->|"truncated observation<br/>(errors are data)"| P
+    M -->|"submit / budget / loop / refusal"| G["git diff → grader<br/>in a fresh container"]
 ```
 
-- **One readable loop**: [`agent/loop.py`](src/patchloop/agent/loop.py) is 209 lines and grew out of [`seed/my_loop.py`](seed/my_loop.py).
-- **Append-only history**: thinking blocks are replayed unchanged. Compaction asks the model for a progress summary and then starts a *fresh* list; it never edits history.
-- **Budgets**: 40 steps, $0.15, 10 minutes and an 80K-token soft prompt limit. Every episode records one of these stop reasons: `submitted`, `step_limit`, `cost_limit`, `time_limit`, `model_refusal`, `loop_detected`, `error`.
-- **Errors are observations**: tool failures go back to the model. 429/5xx/overloaded errors are retried with exponential backoff plus jitter, and each retry is logged.
-- **Loop detection**: the same action 3 times in a row gets one nudge; 5 times stops the episode.
-- **Provider-neutral**: there's a native Anthropic adapter (Haiku 5.5: adaptive thinking with `effort`, prompt caching, refusal handling), an OpenAI-compatible adapter for free tiers, and a scripted `FakeModel`.
+- **One readable loop.** [`agent/loop.py`](src/patchloop/agent/loop.py) is a single `for step in range(max_steps)`
+  with every exit going through one `finish()`. Stop reasons: `submitted`, `step_limit`, `cost_limit`, `time_limit`,
+  `model_refusal`, `loop_detected`, `error`.
+- **Append-only history.** The provider's raw assistant content is replayed byte-for-byte, which keeps prompt caches
+  warm and thinking blocks valid. When the prompt nears its limit, the model writes a progress summary and the loop
+  starts a *fresh* list; it never edits history.
+- **Failure modes handled in code.** Transient API errors are retried with backoff and jitter. Tool errors and
+  malformed calls go back to the model as observations. The same action 3 times in a row gets a nudge, and 5 times
+  stops the episode. Every observation is truncated with an explicit marker.
+- **An interface designed for the model.** `str_replace` requires a unique exact match. When it fails, it shows the
+  most similar region of the file so the model can copy it instead of re-typing code from memory
+  ([ADR-012](docs/DECISIONS.md)).
 
-## Sandbox design
+Line-by-line walkthrough: [docs/learning/LOOP_WALKTHROUGH.md](docs/learning/LOOP_WALKTHROUGH.md) · diagrams:
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · design records: [docs/DECISIONS.md](docs/DECISIONS.md).
 
-| flag | prevents |
+## Sandbox
+
+| Protection | What it prevents |
 |---|---|
-| `--network none` | data exfiltration, downloading anything, calling home |
-| `--read-only` + `--tmpfs /tmp` | persistent changes outside the workspace |
-| tests bind-mounted `:ro` | "fixing" the bug by editing tests |
-| `--user 1000:1000` | root inside the container |
-| `--cap-drop ALL`, `--security-opt no-new-privileges` | privilege escalation via setuid or capabilities |
-| `--memory 1g --memory-swap 1g`, `--cpus 1` | memory bombs, starving the host |
-| `--pids-limit 256`, `--init` | fork bombs, zombie build-up |
+| `--network none` | exfiltration, downloads, calling home |
+| `--read-only` root + `--tmpfs /tmp` | persistent changes outside the workspace |
+| tests bind-mounted `:ro`; grader rejects edits to `conftest.py` and pytest config | "fixing" the bug by changing the tests |
+| `--user 1000:1000`, `--cap-drop ALL`, `no-new-privileges` | root, setuid and capability escalation |
+| `--memory 1g`, `--cpus 1`, `--pids-limit 256`, `--init` | memory and fork bombs, zombie build-up |
 | `timeout -k 2 N` per command | hung commands |
-| `--rm` + anonymous workspace volume + atexit cleanup | leftover containers and data |
-| fresh `git init` after the bug is applied | reading the answer from `git log` / `git diff HEAD` |
-| `_run_docker` argv assertion | agent commands ever running on the host |
+| fresh `git init` after the bug is applied | reading the answer from `git log` or `git diff HEAD` |
+| a single `docker` choke point that asserts its argv | agent commands ever running on the host |
 
-All of this is tested in [`tests/integration/test_sandbox_security.py`](tests/integration/test_sandbox_security.py) and [`tests/unit/test_sandbox_unit.py`](tests/unit/test_sandbox_unit.py).
+All of it is tested against a real container in
+[`tests/integration/test_sandbox_security.py`](tests/integration/test_sandbox_security.py).
 
-## Benchmark construction
+## Benchmark
 
-- **Targets**: toolz 1.2.0 and boltons 26.2.0 (both BSD-3). Each test suite runs in under 2 s in the container. ([ADR-004](docs/DECISIONS.md))
-- **Strategy A (syntax-tree mutations)**: flip a comparison, off-by-one in a `range`/slice, negate a condition, swap arguments, remove a guard clause, change a constant or default, swap `and`/`or`. Exactly one site is changed, and each mutated file is re-parsed.
-- **Strategy B (LLM rewrite, in the spirit of SWE-smith)**: implemented in `benchgen/llm_rewrite.py`. It's opt-in because it costs API money, and it hasn't been run yet.
-- **Validation**: the original repo must pass. The mutated repo must fail at least one test (FAIL_TO_PASS) while all the others pass (PASS_TO_PASS). Each candidate runs twice to rule out flakiness, identical diffs are de-duplicated, and bugs that break more than 25% of the suite are rejected.
-- **Bug reports**: written from failing test names and a filtered failure excerpt only, never from the diff. A **leak check** rejects any report that names the mutated file, line or code.
-- **Current benchmark**: 36 tasks (18 + 18). Mutation mix: compare_flip 7, swap_args 7, off_by_one 6, negate_condition 6, bool_op_swap 4, change_constant 4, remove_guard 2. In 15 of the 36 tasks, a failing test names the buggy function.
-- **Limitations**: both libraries are almost certainly in the model's training data. The bugs are new, but familiarity with the original code helps. Synthetic single-line bugs are easier than real ones.
+- **Targets:** [toolz](https://github.com/pytoolz/toolz) 1.2.0 and [boltons](https://github.com/mahmoud/boltons)
+  26.2.0 (both BSD-3), pinned by commit. Each full test suite runs in under 2 s ([ADR-004](docs/DECISIONS.md)).
+- **Strategy A, syntax-tree mutations:** flip a comparison, off-by-one, negate a condition, swap arguments, remove a
+  guard, change a constant, swap `and`/`or`. One site per bug, spliced into the original formatting.
+- **Validation:** the original passes; the mutated repo fails specific tests (FAIL_TO_PASS) while the rest pass
+  (PASS_TO_PASS), identically on two runs; duplicates and bugs breaking over 25% of the suite are rejected.
+- **Bug reports** are written from failing test names and assertion output only, never from the diff. A leak check
+  rejects any report that names the file, the line or the changed code.
+- **36 tasks** (18 per library). **Strategy B** (a model rewrites a function with one subtle bug) produced 6 more
+  validated tasks with the local model, in [`bench/tasks_llm/`](bench/tasks_llm/). They aren't evaluated yet
+  ([ADR-013](docs/DECISIONS.md)).
 
 ## Quickstart
 
-```bash
-make setup && make images
-```
+Requirements: Docker, [uv](https://docs.astral.sh/uv/), and [Ollama](https://ollama.com) for real-model runs.
 
 ```bash
-make demo
+git clone https://github.com/varad-oss/patchloop.git && cd patchloop
+make setup && make images       # Python env + sandbox images (a few minutes, once)
+make demo                       # a scripted model fixes a toy bug in the sandbox; no model needed
 ```
 
-That runs a scripted FakeModel that fixes a toy bug inside Docker, with no API key needed. Then:
+Run the real agent on the benchmark, for free:
 
 ```bash
-make test && make test-docker
+make local-model                # pulls qwen3:8b (~5 GB) and builds the 16K-context variant
+make eval-local RUN=E1          # 36 tasks, about 2.5 h on an Apple M5
+make progress                   # live progress bar, current step and time left
 ```
+
+`patchloop` commands below assume the environment is active (`source .venv/bin/activate`).
+Then `patchloop report --run-id E1` writes a summary and `results/E1/viewer.html`, a page with every step of every
+episode. With an Anthropic key in `.env`, `make eval-pilot RUN=E1 MODEL=claude-haiku-5-5` measures the cost on 3
+tasks before anything larger runs.
+
+## Reproducing the numbers
+
+| Command | What it does | Time |
+|---|---|---|
+| `make test` | 85 unit tests (no Docker, no model, no network) | seconds |
+| `make test-docker` | 16 sandbox-security, end-to-end and MCP tests against real containers | ~20 s |
+| `make bench` | regenerates and validates the 36 tasks (no model) | a few minutes |
+| `patchloop eval --model oracle --run-id oracle` | harness check: must resolve 36/36 | ~3 min |
+| `scripts/run_local_experiments.sh` | thinking-on check, then E1 and E2 on local qwen3 | ~7 h |
+| `patchloop report --all` | regenerates [docs/EVAL_REPORT.md](docs/EVAL_REPORT.md), the chart, and the viewers from `results/` | seconds |
+| `patchloop replay` | renders a trajectory as the GIF above | seconds |
+
+## MCP server
+
+The same sandboxed tools are available to any MCP client, such as Claude Code or Claude Desktop, built on the
+official Python SDK v2. Each session gets its own container, created lazily and removed when idle:
 
 ```bash
-make bench
+claude mcp add patchloop -- "$(pwd)/.venv/bin/python" -m patchloop.mcp_server.server
 ```
 
-```bash
-make eval-smoke
+Config for Claude Desktop, a risk analysis (tool poisoning, over-broad permissions) and a demo script:
+[docs/MCP.md](docs/MCP.md).
+
+## Project structure
+
+```
+src/patchloop/
+  agent/        loop.py (the loop) · models.py (adapters, pricing) · tools.py (6 tools)
+                context.py (compaction) · prompts.py · trajectory.py (JSONL)
+  sandbox/      docker_env.py (one locked-down container per episode) · images/ (Dockerfiles)
+  benchgen/     mutators.py (strategy A) · llm_rewrite.py (strategy B) · validate.py · issues.py · build.py
+  evals/        runner.py · grader.py · metrics.py · report.py · replay.py · viewer/
+  mcp_server/   server.py
+bench/tasks/    the 36 benchmark tasks      bench/tasks_llm/   strategy-B tasks
+results/        committed episodes and trajectories behind every number
+docs/           report, analysis, architecture, decisions, MCP, learning notes (M0-M7)
+tests/          unit/ (offline) and integration/ (Docker)
 ```
 
-`make bench` regenerates the 36 tasks with no API calls. `make eval-smoke` runs the runner, grader, report and viewer for free.
+## Limitations
 
-For a paid run (copy `.env.example` to `.env` and add your key first):
+- **One small local model.** Results are for qwen3:8b, one trial per task; intervals are wide.
+- **Synthetic bugs.** Mostly single-line mutations, easier to localize than real-world bugs.
+- **Contamination.** Both libraries are surely in the model's training data. The bugs are new, but the original
+  code is familiar.
+- **Template bug reports** are more structured than real user reports.
+- **Docker is the isolation boundary.** A kernel or container-runtime escape would defeat it; a microVM (gVisor,
+  Firecracker) would be stronger.
 
-```bash
-make eval-pilot RUN=E1
-```
+## Roadmap
 
-The pilot runs 3 tasks and prints the measured cost per task and the extrapolated total. Run `make eval RUN=E1` only after approving that cost.
+- Evaluate the strategy-B tasks, and grow them past 10 with a stronger model.
+- Best-of-k with test-based selection, reported as pass@k and pass^k (implemented, not run).
+- Repeat E1/E2 with a stronger model to test whether the interface effect shrinks.
+- Real-bug tasks mined from the libraries' own history.
 
-## MCP demo
+## Credits
 
-See [docs/MCP.md](docs/MCP.md) for Claude Code and Claude Desktop config, notes on MCP risks, and a recording checklist.
+Built by Varad Rajiv Pandare, with Claude Code as a pair programmer, from my specification and under my direction.
+Benchmark design, experiments and analysis are mine.
 
-## How it was built
+Ideas drawn from [SWE-bench](https://www.swebench.com) (FAIL_TO_PASS / PASS_TO_PASS grading),
+[SWE-agent](https://github.com/SWE-agent/SWE-agent) (agent-computer interface design),
+[mini-SWE-agent](https://github.com/SWE-agent/mini-swe-agent) (linear history, stateless bash) and
+[SWE-smith](https://github.com/SWE-bench/SWE-smith) (LLM-rewrite bug generation).
 
-Implemented with Claude Code as a pair programmer, starting from a hand-written-style seed loop. Benchmark design, experiments and analysis by Varad.
+## License
+
+[MIT](LICENSE)

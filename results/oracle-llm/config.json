@@ -1,0 +1,23 @@
+{
+  "run_id": "oracle-llm",
+  "model": "oracle",
+  "toolset": "structured",
+  "trials": 1,
+  "effort": "low",
+  "budget": {
+    "max_steps": 40,
+    "max_cost_usd": 0.15,
+    "max_wall_s": 600,
+    "soft_prompt_tokens": 80000,
+    "max_retries": 6
+  },
+  "pricing_checked": "2026-10-23",
+  "tasks": [
+    "toolz__concat-llm_rewrite-004",
+    "toolz__interpose-llm_rewrite-001",
+    "toolz__is_valid_args-llm_rewrite-006",
+    "toolz__iterate-llm_rewrite-003",
+    "toolz__tail-llm_rewrite-002",
+    "toolz__valfilter-llm_rewrite-005"
+  ]
+}
