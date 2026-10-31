@@ -5,14 +5,18 @@ lazily on the first tool call, destroyed after PATCHLOOP_MCP_IDLE_S seconds with
 on shutdown. Same isolation as episodes: no network, read-only tests, non-root, no capabilities.
 
 The tool descriptions are the same plain descriptions the agent gets; they contain no hidden
-instructions. Configure the target with env vars:
-  PATCHLOOP_MCP_TASK   path to a task JSON (default: bench/toy/toy__median-even.json)
+instructions. The target is either your own repository or a benchmark task:
+  --repo PATH / PATCHLOOP_MCP_REPO   a repository prepared with `patchloop mcp-prepare PATH`. The agent edits a
+                                     copy inside the sandbox; `diff` returns the patch for you to review and apply.
+  PATCHLOOP_MCP_TASK                 a task JSON (default, the demo: bench/toy/toy__median-even.json)
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
+import sys
 import threading
 import time
 from contextlib import asynccontextmanager
@@ -25,13 +29,14 @@ from ..agent.models import ToolCall
 from ..agent.tools import TOOL_SPECS, Toolbox
 from ..config import ROOT
 from ..sandbox.docker_env import DockerEnv
+from .prepare import PrepareError, load_config
 
 DEFAULT_TASK = ROOT / "bench" / "toy" / "toy__median-even.json"
 
 
 class SandboxSession:
-    def __init__(self, task_path: Path, idle_s: float, env_factory=DockerEnv):
-        self.task = json.loads(Path(task_path).read_text())
+    def __init__(self, target: dict, idle_s: float, env_factory=DockerEnv):
+        self.task = target  # a task JSON or a prepared repo config: image, tests_dir, test_cmd, bug_patch
         self.idle_s = idle_s
         self.env_factory = env_factory
         self.env = None
@@ -56,6 +61,12 @@ class SandboxSession:
             self.last_used = time.monotonic()
         return ("ERROR: " if obs.is_error else "") + obs.content
 
+    def diff(self) -> str:
+        with self.lock:
+            self.last_used = time.monotonic()
+            self._ensure()
+            return self.env.diff() or "(no changes)"
+
     def _reap(self) -> None:
         while not self._stop.wait(5):
             with self.lock:
@@ -73,9 +84,21 @@ class SandboxSession:
             self.close_env()
 
 
-def build_server(task_path: Path | None = None, idle_s: float | None = None, env_factory=DockerEnv) -> MCPServer:
+def instructions(target: dict) -> str:
+    sandbox = "in an isolated Docker sandbox (no network, tests read-only)"
+    if target.get("problem_statement"):
+        return f"Tools operate on one Python repository {sandbox}. Issue: {target['problem_statement']}"
+    return (f"Tools operate on a copy of the repository {target['name']!r} {sandbox}. Edits never touch the "
+            f"original files: call diff to get the changes as a patch, which the user can apply with git apply.")
+
+
+def build_server(task_path: Path | None = None, idle_s: float | None = None, env_factory=DockerEnv,
+                 repo: Path | None = None) -> MCPServer:
+    """Serve `repo` (prepared with `patchloop mcp-prepare`) if given, else a task file (default: the toy demo)."""
+    target = load_config(repo) if repo else \
+        json.loads(Path(task_path or os.environ.get("PATCHLOOP_MCP_TASK", DEFAULT_TASK)).read_text())
     session = SandboxSession(
-        Path(task_path or os.environ.get("PATCHLOOP_MCP_TASK", DEFAULT_TASK)),
+        target,
         float(idle_s if idle_s is not None else os.environ.get("PATCHLOOP_MCP_IDLE_S", 600)),
         env_factory,
     )
@@ -89,8 +112,7 @@ def build_server(task_path: Path | None = None, idle_s: float | None = None, env
 
     server = MCPServer(
         "patchloop",
-        instructions=(f"Tools operate on one Python repository in an isolated Docker sandbox (no network, tests "
-                      f"read-only). Issue: {session.task['problem_statement']}"),
+        instructions=instructions(target),
         lifespan=lifespan,
     )
 
@@ -119,14 +141,23 @@ def build_server(task_path: Path | None = None, idle_s: float | None = None, env
 
     @server.tool(description="Show the current git diff of the sandboxed repository (your changes so far).")
     async def diff() -> str:
-        return await anyio.to_thread.run_sync(lambda: session._ensure() and session.env.diff() or "(no changes)")
+        return await anyio.to_thread.run_sync(session.diff)
 
     server.session = session  # for tests
     return server
 
 
-def main() -> None:
-    build_server().run()  # stdio
+def main(argv: list[str] | None = None) -> None:
+    p = argparse.ArgumentParser(prog="patchloop-mcp", description="PatchLoop's sandboxed tools over MCP (stdio).")
+    p.add_argument("--repo", default=os.environ.get("PATCHLOOP_MCP_REPO"),
+                   help="your repository, prepared first with `patchloop mcp-prepare PATH` (default: the toy demo)")
+    args = p.parse_args(argv)
+    try:
+        server = build_server(repo=Path(args.repo) if args.repo else None)
+    except PrepareError as e:  # stdout is the MCP channel, so errors go to stderr
+        print(f"patchloop-mcp: {e}", file=sys.stderr)
+        sys.exit(1)
+    server.run()  # stdio
 
 
 if __name__ == "__main__":

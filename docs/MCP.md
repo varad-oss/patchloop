@@ -3,15 +3,28 @@
 `src/patchloop/mcp_server/server.py` serves `bash`, `view_file`, `search`, `str_replace`, `run_tests` (and a
 read-only `diff`) over stdio with the official Python SDK (`mcp` 2.3.0, `MCPServer`). Each MCP session gets one
 sandbox container, created on the first tool call, removed after `PATCHLOOP_MCP_IDLE_S` (default 600 s) idle
-and on shutdown. The target defaults to the toy task; set `PATCHLOOP_MCP_TASK=bench/tasks/<id>.json` for others.
+and on shutdown.
 
-Tested by `tests/integration/test_mcp_server.py` (SDK client, in-process, real Docker container).
+**Targets.**
+- **Your own repository** (`--repo PATH` or `PATCHLOOP_MCP_REPO`), prepared once with `patchloop mcp-prepare PATH`.
+  This builds `patchloop/user-<name>-<hash>` from `sandbox/images/Dockerfile.user` (the repo plus an editable install
+  of its dependencies; network only at build time), detects the tests directory, and saves a config under
+  `~/.cache/patchloop/mcp_repos/`. The model edits a copy inside the container; `diff` returns the patch.
+  `Dockerfile.user.dockerignore` keeps `.git`, virtualenvs, caches and `.env` files out of the image.
+- **A benchmark task** (`PATCHLOOP_MCP_TASK=bench/tasks/<id>.json`).
+- **The demo** (the default): the toy repo with a planted `median()` bug.
+
+Tested by `tests/integration/test_mcp_server.py` (SDK client, in-process, real Docker container: the demo, and a copy
+of `toy_repo` prepared as a user's project) and `tests/unit/test_mcp_prepare.py` (detection, config, server wiring).
 
 ## Claude Code
 
 ```bash
-claude mcp add patchloop -- "/ABSOLUTE/PATH/patchloop/.venv/bin/python" -m patchloop.mcp_server.server
+patchloop mcp-prepare /ABSOLUTE/PATH/myproject
+claude mcp add patchloop -- "/ABSOLUTE/PATH/patchloop/.venv/bin/patchloop-mcp" --repo /ABSOLUTE/PATH/myproject
 ```
+
+Omit `--repo` for the demo. `mcp-prepare` prints the exact `claude mcp add` line for your paths.
 
 ## Claude Desktop (`claude_desktop_config.json`)
 
@@ -19,13 +32,22 @@ claude mcp add patchloop -- "/ABSOLUTE/PATH/patchloop/.venv/bin/python" -m patch
 {
   "mcpServers": {
     "patchloop": {
-      "command": "/ABSOLUTE/PATH/patchloop/.venv/bin/python",
-      "args": ["-m", "patchloop.mcp_server.server"],
+      "command": "/ABSOLUTE/PATH/patchloop/.venv/bin/patchloop-mcp",
+      "args": ["--repo", "/ABSOLUTE/PATH/myproject"],
       "env": {"PATCHLOOP_MCP_IDLE_S": "600"}
     }
   }
 }
 ```
+
+## Limits
+
+- Python projects with a pytest suite in a sub-directory (it is mounted read-only, so it cannot be the whole repo).
+- The image is a snapshot: after you change the code yourself, re-run `mcp-prepare` (fast when dependencies are cached).
+- Dependencies needing system packages beyond `python:3.12-slim` (plus git and ripgrep) fail at build time, with
+  Docker's error shown.
+- `run_tests` summarises pytest's final count line; projects whose own config already passes `-q` print no such line,
+  so read the exit code instead.
 
 ## Risks and how this server limits them
 

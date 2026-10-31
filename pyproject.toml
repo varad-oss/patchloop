@@ -17,6 +17,7 @@ dev = ["pytest==9.1.1", "ruff==0.17.2", "pillow==13.0.0"]
 
 [project.scripts]
 patchloop = "patchloop.cli:main"
+patchloop-mcp = "patchloop.mcp_server.server:main"
 
 [build-system]
 requires = ["hatchling"]

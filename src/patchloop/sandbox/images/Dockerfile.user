@@ -1,0 +1,32 @@
+# Image for a user's own Python repository, built by `patchloop mcp-prepare <repo>` (build context = the repo).
+# Network is used only here, at build time, to install dependencies. MCP sandbox containers run with --network none.
+# Dockerfile.user.dockerignore keeps .git, virtualenvs, caches and .env files out of the image.
+FROM python:3.12-slim
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git ripgrep \
+ && rm -rf /var/lib/apt/lists/* \
+ && useradd --create-home --uid 1000 agent \
+ && pip install --no-cache-dir pytest==9.1.1
+
+COPY . /workspace
+WORKDIR /workspace
+
+# An editable install, so edits in /workspace take effect immediately. Test extras are tried first; missing
+# extras are only a warning. requirements files are installed when present. Any install failure fails the build.
+RUN if [ -f pyproject.toml ] || [ -f setup.py ] || [ -f setup.cfg ]; then \
+      pip install --no-cache-dir -e ".[test,tests,testing,dev]"; \
+    fi \
+ && for f in requirements.txt requirements-dev.txt requirements-test.txt requirements/test.txt; do \
+      if [ -f "$f" ]; then pip install --no-cache-dir -r "$f"; fi; \
+    done \
+ && git init -q \
+ && git -c user.name=patchloop -c user.email=patchloop@localhost add -A \
+ && git -c user.name=patchloop -c user.email=patchloop@localhost commit -qm base \
+ && chown -R agent:agent /workspace
+
+ENV PYTHONPATH=/workspace \
+    PYTHONDONTWRITEBYTECODE=1 \
+    HOME=/tmp \
+    PIP_NO_INDEX=1
+USER agent

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- MCP server works on your own Python repository: `patchloop mcp-prepare PATH` builds a sandbox image of the repo and
+  its dependencies, and `patchloop-mcp --repo PATH` serves it. The model edits a copy; `diff` returns a patch to apply
+  with `git apply`. `.git`, virtualenvs and `.env` files stay out of the image. Without `--repo` the toy demo is served.
+- `diff` over MCP now takes the session lock, so the idle reaper cannot close the container mid-call.
+
 ## v0.1.0 — 2026-10-24
 
 First public release.

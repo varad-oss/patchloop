@@ -1,0 +1,15 @@
+# Never copied into the image: history, secrets, local environments and caches.
+.git
+**/.env
+**/.env.*
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.tox
+**/.nox
+**/node_modules
+**/.DS_Store

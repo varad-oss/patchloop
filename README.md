@@ -151,8 +151,8 @@ tasks before anything larger runs.
 
 | Command | What it does | Time |
 |---|---|---|
-| `make test` | 85 unit tests (no Docker, no model, no network) | seconds |
-| `make test-docker` | 16 sandbox-security, end-to-end and MCP tests against real containers | ~20 s |
+| `make test` | 103 unit tests (no Docker, no model, no network) | seconds |
+| `make test-docker` | 17 sandbox-security, end-to-end and MCP tests against real containers | ~20 s |
 | `make bench` | regenerates and validates the 36 tasks (no model) | a few minutes |
 | `patchloop eval --model oracle --run-id oracle` | harness check: must resolve 36/36 | ~3 min |
 | `scripts/run_local_experiments.sh` | thinking-on check, then E1 and E2 on local qwen3 | ~7 h |
@@ -162,11 +162,26 @@ tasks before anything larger runs.
 ## MCP server
 
 The same sandboxed tools are available to any MCP client, such as Claude Code or Claude Desktop, built on the
-official Python SDK v2. Each session gets its own container, created lazily and removed when idle:
+official Python SDK v2: `bash`, `view_file`, `search`, `str_replace`, `run_tests` and `diff`. Each session gets its own
+container, created lazily and removed when idle.
+
+**On your own Python project.** Prepare it once, then add the server. This builds a sandbox image of the repo with its
+dependencies, which takes a minute or two the first time:
 
 ```bash
-claude mcp add patchloop -- "$(pwd)/.venv/bin/python" -m patchloop.mcp_server.server
+patchloop mcp-prepare ~/code/myproject
+claude mcp add patchloop -- "$(pwd)/.venv/bin/patchloop-mcp" --repo ~/code/myproject
 ```
+
+The model works on a **copy** of your repo inside the container, with no network and your tests read-only. Your files
+are never modified: `diff` returns the changes as a patch, and you review it and apply it with `git apply`. `.git`,
+virtualenvs and `.env` files are never copied into the image.
+
+Scope: Python projects with a pytest suite (`tests/`, `test/` or `<package>/tests`, or set `--tests-dir`); dependencies
+from `pyproject.toml`, `setup.py` or `requirements*.txt`. Docker is required. Packages that need system libraries
+outside `python:3.12-slim` may fail to build. Re-run `mcp-prepare` after you change the code yourself.
+
+**Without `--repo`** the server opens a built-in demo: a toy repo with one planted bug in `median()`.
 
 **Recorded demo:** [docs/MCP_DEMO.md](docs/MCP_DEMO.md) shows Claude Code, with all built-in tools disabled, fixing
 the toy bug through the server in 8 turns, and being refused (`Read-only file system`) when it tries to edit a test.

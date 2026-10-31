@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
 import statistics
 import sys
 from pathlib import Path
@@ -156,6 +157,20 @@ def cmd_replay(args) -> int:
     return 0
 
 
+def cmd_mcp_prepare(args) -> int:
+    """Build a sandbox image of the user's own repository so the MCP server can open it."""
+    from .mcp_server.prepare import PrepareError, prepare
+
+    try:
+        cfg = prepare(Path(args.repo), tests_dir=args.tests_dir, test_cmd=args.test_cmd)
+    except PrepareError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 2
+    server = shlex.quote(str(Path(sys.executable).parent / "patchloop-mcp"))
+    print(f"\nAdd it to Claude Code:\n  claude mcp add patchloop -- {server} --repo {shlex.quote(cfg['repo'])}")
+    return 0
+
+
 def cmd_progress(args) -> int:
     from .progress import parse_runs, watch
 
@@ -215,6 +230,12 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("--episode", default="toolz__keyfilter-negate_condition-009")
     rp.add_argument("--out", default=str(ROOT / "docs" / "demo.gif"))
     rp.set_defaults(fn=cmd_replay)
+
+    mp = sub.add_parser("mcp-prepare", help="build a sandbox image of your own repo for the MCP server")
+    mp.add_argument("repo", help="path to a Python repository with a pytest test suite")
+    mp.add_argument("--tests-dir", help="tests directory, relative to the repo (default: detected)")
+    mp.add_argument("--test-cmd", help="test command (default: python -m pytest -p no:cacheprovider <tests-dir>)")
+    mp.set_defaults(fn=cmd_mcp_prepare)
 
     pr = sub.add_parser("progress", help="live terminal dashboard (read-only) for running experiments")
     pr.add_argument("--runs", nargs="+", default=["effort-low-r3:5", "E1:36", "E2:36"],

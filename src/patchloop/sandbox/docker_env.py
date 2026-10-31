@@ -56,10 +56,17 @@ def _cleanup_all() -> None:
 atexit.register(_cleanup_all)
 
 
+def cache_root() -> Path:
+    return Path(os.environ.get("PATCHLOOP_CACHE", Path.home() / ".cache" / "patchloop"))
+
+
+def snapshot_dir(image: str, tests_dir: str) -> Path:
+    return cache_root() / "tests" / image.replace("/", "_").replace(":", "_") / tests_dir.replace("/", "_")
+
+
 def tests_snapshot(image: str, tests_dir: str) -> Path:
     """Copy the image's tests directory to the host once; it is bind-mounted read-only."""
-    root = Path(os.environ.get("PATCHLOOP_CACHE", Path.home() / ".cache" / "patchloop")) / "tests"
-    target = root / image.replace("/", "_").replace(":", "_") / tests_dir.replace("/", "_")
+    target = snapshot_dir(image, tests_dir)
     if (target / ".complete").exists():
         return target
     target.parent.mkdir(parents=True, exist_ok=True)
