@@ -225,13 +225,14 @@ tests/          unit/ (offline) and integration/ (Docker)
 
 ## Credits
 
-Built by Varad Rajiv Pandare, with Claude Code as a pair programmer, from my specification and under my direction.
-Benchmark design, experiments and analysis are mine.
+Built by Varad Pandare.
 
 Ideas drawn from [SWE-bench](https://www.swebench.com) (FAIL_TO_PASS / PASS_TO_PASS grading),
 [SWE-agent](https://github.com/SWE-agent/SWE-agent) (agent-computer interface design),
 [mini-SWE-agent](https://github.com/SWE-agent/mini-swe-agent) (linear history, stateless bash) and
 [SWE-smith](https://github.com/SWE-bench/SWE-smith) (LLM-rewrite bug generation).
+
+Benchmark design, experiments and analysis are mine.
 
 ## License
 
